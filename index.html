@@ -96,6 +96,7 @@
                 <form id="content-form" class="grid gap-3 sm:grid-cols-2">
                     <input type="hidden" id="content-editing-id">
                     <label class="text-[10px] font-black uppercase tracking-wider text-slate-400">Tipo<select id="content-type-input" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-bold outline-none"><option value="frase">Frase</option><option value="dica">Dica de venda</option></select></label>
+                    <label class="text-[10px] font-black uppercase tracking-wider text-slate-400">Humor ideal<select id="content-mood-input" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-bold outline-none"><option value="">Todos os humores</option><option value="muito-mal">Muito mal</option><option value="mal">Mal</option><option value="normal">Normal</option><option value="bem">Bem</option><option value="excelente">Excelente</option><option value="energizado">Energizado</option></select></label>
                     <label class="text-[10px] font-black uppercase tracking-wider text-slate-400">Autor (opcional)<input id="content-author-input" maxlength="120" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-medium outline-none"></label>
                     <label class="text-[10px] font-black uppercase tracking-wider text-slate-400 sm:col-span-2">Texto<textarea id="content-text-input" required maxlength="500" rows="3" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-medium outline-none"></textarea></label>
                     <div class="flex justify-end gap-2 sm:col-span-2"><button type="button" id="cancel-content-edit" class="hidden rounded-xl px-4 py-2.5 text-xs font-bold text-slate-500">Cancelar</button><button type="submit" class="rounded-xl bg-indigo-600 px-5 py-2.5 text-xs font-black text-white">Salvar conteúdo</button></div>
@@ -119,6 +120,13 @@
         </main>
     </div>
 
+    <div id="mood-required-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="mood-required-title">
+        <div class="w-full max-w-md rounded-[2rem] bg-white p-6 shadow-2xl">
+            <div class="mb-5 text-center"><div class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-100 text-orange-500"><i data-lucide="heart-handshake" class="h-6 w-6"></i></div><h2 id="mood-required-title" class="text-lg font-black text-slate-800">Como você está hoje?</h2><p class="mt-1 text-xs text-slate-400">Escolha seu humor para continuar.</p></div>
+            <div id="required-mood-options" class="grid grid-cols-3 gap-2"></div>
+        </div>
+    </div>
+
     <div id="app-shell" class="hidden">
 
     <!-- HEADER -->
@@ -135,13 +143,6 @@
                 <button type="button" id="app-logout" aria-label="Sair" class="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-red-50 hover:text-red-600"><i data-lucide="log-out" class="h-4 w-4"></i></button>
             </div>
         </div>
-    <div id="mood-required-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="mood-required-title">
-        <div class="w-full max-w-md rounded-[2rem] bg-white p-6 shadow-2xl">
-            <div class="mb-5 text-center"><div class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-100 text-orange-500"><i data-lucide="heart-handshake" class="h-6 w-6"></i></div><h2 id="mood-required-title" class="text-lg font-black text-slate-800">Como você está hoje?</h2><p class="mt-1 text-xs text-slate-400">Escolha seu humor para continuar.</p></div>
-            <div id="required-mood-options" class="grid grid-cols-3 gap-2"></div>
-        </div>
-    </div>
-                            <label class="text-[10px] font-black uppercase tracking-wider text-slate-400">Humor ideal<select id="content-mood-input" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-bold outline-none"><option value="">Todos os humores</option><option value="muito-mal">Muito mal</option><option value="mal">Mal</option><option value="normal">Normal</option><option value="bem">Bem</option><option value="excelente">Excelente</option><option value="energizado">Energizado</option></select></label>
         <div id="manager-bar" class="hidden border-t border-amber-100 bg-amber-50 px-4 py-2">
             <div class="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-2">
                 <div class="flex items-center gap-2 text-xs font-bold text-amber-700"><i data-lucide="shield" class="h-4 w-4"></i><span id="manager-bar-label">Modo gerente</span></div>
@@ -894,6 +895,7 @@
             renderGoalCard();
             renderDailyContent();
             document.getElementById('app-logout').addEventListener('click', () => { clearSession(); location.href = location.pathname; });
+            if (!getMoodRecords()[getLocalDateKey()]) openRequiredMood();
         }
 
         function refreshAllAppViews() {
@@ -2837,6 +2839,7 @@
         }
 
         function openRequiredMood() {
+            document.getElementById('app-shell').classList.add('hidden');
             const modal = document.getElementById('mood-required-modal');
             modal.classList.remove('hidden');
             modal.classList.add('flex');
@@ -2845,6 +2848,7 @@
         }
 
         function closeRequiredMood() {
+            document.getElementById('app-shell').classList.remove('hidden');
             const modal = document.getElementById('mood-required-modal');
             modal.classList.add('hidden');
             modal.classList.remove('flex');
