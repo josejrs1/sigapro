@@ -1271,7 +1271,8 @@
             const end = currentPeriod === 'dia' ? today : currentPeriod === 'mes' ? `${monthly.month}-${String(new Date(Number(monthly.month.slice(0, 4)), Number(monthly.month.slice(5, 7)), 0).getDate()).padStart(2, '0')}` : weekly.weekEnd;
             const target = currentPeriod === 'dia' ? Number(userDistribution.value) / weekDays : currentPeriod === 'mes' ? monthly.total : Number(userDistribution.value);
             const total = [...sales, ...storeSales].filter(sale => sale.date >= start && sale.date <= end).reduce((sum, sale) => sum + Number(sale.value || 0), 0);
-            const goalValues = currentPeriod === 'mes' ? { bronze: monthly.total * 0.25, silver: monthly.total * 0.5, gold: monthly.total * 0.75, diamond: monthly.total } : { bronze: Number(userDistribution.value) * 0.25, silver: Number(userDistribution.value) * 0.5, gold: Number(userDistribution.value) * 0.75, diamond: Number(userDistribution.value) };
+            const diamond = target;
+            const goalValues = { bronze: diamond * 0.25, silver: diamond * 0.5, gold: diamond * 0.75, diamond };
             return { goal: goalValues, target, total, start, end };
         }
 
@@ -1285,7 +1286,7 @@
         function renderGoalCard() {
             const data = currentGoalData();
             const goal = data.goal;
-            const percent = Math.min(100, data.total / Math.max(1, data.target) * 100);
+            const percent = Math.min(100, data.total / Math.max(1, Number(goal.diamond || 0)) * 100);
             document.getElementById('period-title').textContent = window.activeGoalPeriod === 'dia' ? 'Meta Diária' : window.activeGoalPeriod === 'mes' ? 'Meta Mensal' : 'Meta Semanal';
             document.getElementById('period-date').textContent = `${data.start} até ${data.end}`;
             document.getElementById('total-vendas').textContent = money(data.total);
