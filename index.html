@@ -1061,6 +1061,31 @@
             session.viewingUserId = previousViewing; saveSession(session);
         }
 
+        function deleteManagerTask(userId, taskId) {
+            const key = `siga-tarefas::${userId}`;
+            const tasks = readStoredList(key).filter(task => task.id !== taskId);
+            localStorage.setItem(key, JSON.stringify(tasks));
+            const session = getSession();
+            const previousViewing = session.viewingUserId;
+            session.viewingUserId = userId;
+            saveSession(session);
+            syncStoredList(key, tasks, [taskId]);
+            session.viewingUserId = previousViewing;
+            saveSession(session);
+        }
+
+        let managerEditingTask = null;
+
+        function openManagerTaskEditor(task) {
+            managerEditingTask = { userId: task.vendedorId, taskId: task.id };
+            document.getElementById('new-task-title').textContent = 'Editar tarefa da equipe';
+            document.getElementById('new-task-title-input').value = task.title;
+            document.getElementById('new-task-time-input').value = task.time;
+            document.getElementById('task-repeat-toggle').checked = false;
+            document.getElementById('task-repeat-options').classList.add('hidden');
+            openNewTaskModal();
+        }
+
         function renderManagerTaskVendors() {
             const session = getSession();
             const vendors = getUsuarios().filter(item => item.lojaId === session?.lojaId && item.role === 'vendedor');
@@ -1083,7 +1108,11 @@
                             <span>${task.owner === 'manager' ? 'Gerente' : 'Vendedor'}</span>
                             ${managerTaskStatusLabel(task)}
                         </div>
-                        <button type="button" data-manager-observe-task="${task.id}" data-task-owner="${task.vendedorId}" class="mt-2 text-[10px] font-black text-indigo-600">Adicionar observação</button>
+                        <div class="mt-2 flex flex-wrap items-center gap-3">
+                            <button type="button" data-manager-observe-task="${task.id}" data-task-owner="${task.vendedorId}" class="text-[10px] font-black text-indigo-600">Adicionar observação</button>
+                            <button type="button" data-manager-edit-task="${task.id}" data-task-owner="${task.vendedorId}" class="text-[10px] font-black text-slate-500 hover:text-indigo-600">Editar</button>
+                            <button type="button" data-manager-delete-task="${task.id}" data-task-owner="${task.vendedorId}" class="text-[10px] font-black text-red-500 hover:text-red-600">Excluir</button>
+                        </div>
                     </div>
                 </article>
             `).join('') : '<p class="rounded-2xl bg-white p-4 text-xs text-slate-400">Nenhuma tarefa registrada pela equipe.</p>';
@@ -1100,6 +1129,20 @@
             if (observe && getSession()?.role === 'gerente') {
                 const note = window.prompt('Observação para esta tarefa:', '');
                 if (note !== null) { const task = collectAllTasksForStore(getSession().lojaId).find(item => item.id === observe.dataset.managerObserveTask && item.vendedorId === observe.dataset.taskOwner); if (task) { saveManagerTask(task.vendedorId, task.id, { observation: sanitizeObservation(note) }); renderManagerOverview(); } }
+            }
+            const edit = event.target.closest('[data-manager-edit-task]');
+            if (edit && getSession()?.role === 'gerente') {
+                const task = collectAllTasksForStore(getSession().lojaId).find(item => item.id === edit.dataset.managerEditTask && item.vendedorId === edit.dataset.taskOwner);
+                if (task) openManagerTaskEditor(task);
+            }
+            const remove = event.target.closest('[data-manager-delete-task]');
+            if (remove && getSession()?.role === 'gerente') {
+                const task = collectAllTasksForStore(getSession().lojaId).find(item => item.id === remove.dataset.managerDeleteTask && item.vendedorId === remove.dataset.taskOwner);
+                if (task) {
+                    deleteManagerTask(task.vendedorId, task.id);
+                    renderManagerOverview();
+                    showToast('Tarefa excluída.');
+                }
             }
         });
 
@@ -2310,6 +2353,8 @@
         function closeNewTaskModal() {
             document.getElementById('new-task-modal').classList.add('hidden');
             document.getElementById('new-task-modal').classList.remove('flex');
+            managerEditingTask = null;
+            document.getElementById('new-task-title').textContent = 'Adicionar tarefa';
         }
 
         function setupModalBackdropClose() {
@@ -2373,6 +2418,15 @@
                 const title = document.getElementById('new-task-title-input').value.trim();
                 const time = document.getElementById('new-task-time-input').value;
                 if (!title || !time) return;
+                if (managerEditingTask) {
+                    saveManagerTask(managerEditingTask.userId, managerEditingTask.taskId, { title, time });
+                    event.target.reset();
+                    document.getElementById('task-repeat-options').classList.add('hidden');
+                    closeNewTaskModal();
+                    renderManagerOverview();
+                    showToast('Tarefa atualizada.');
+                    return;
+                }
                 const repeatEnabled = document.getElementById('task-repeat-toggle').checked;
                 const repeatDays = Array.from(document.querySelectorAll('.task-repeat-day:checked')).map(input => Number(input.value));
                 const tasks = getTasks();
