@@ -663,8 +663,8 @@
 
         function databaseRowToApp(table, row) {
             if (table === 'tarefas') return { ...row, title: row.titulo ?? row.title, time: row.horario ?? row.time, owner: row.owner ?? 'user', ownerId: row.responsavel_id ?? row.ownerId, completed: row.concluida ?? row.completed ?? false, observation: row.observacao ?? row.observation ?? '', date: row.data ?? row.date, seriesId: row.serie_id ?? row.seriesId, repeatDays: row.dias_repeticao ?? row.repeatDays };
-            if (table === 'vendas') return { ...row, userId: row.vendedor_id ?? row.userId, client: row.cliente ?? row.client ?? '', value: row.valor ?? row.value, datetime: row.data_hora ?? row.datetime, products: row.produtos ?? row.products ?? [] };
-            if (table === 'atendimentos') return { ...row, userId: row.vendedor_id ?? row.userId, client: row.cliente ?? row.client ?? '', outcome: row.resultado ?? row.outcome, outcomeLabel: row.resultado_label ?? row.outcomeLabel, value: row.valor ?? row.value ?? 0, phone: row.telefone ?? row.phone ?? '', notes: row.observacao ?? row.notes ?? '', products: row.produtos ?? row.products ?? [], shownProducts: row.produtos_apresentados ?? row.shownProducts ?? [], demand: row.demanda ?? row.demand ?? '', saleId: row.venda_id ?? row.saleId, conditionalId: row.condicional_id ?? row.conditionalId, datetime: row.data_hora ?? row.datetime };
+            if (table === 'vendas') { const datetime = row.data_hora ?? row.datetime; return { ...row, userId: row.vendedor_id ?? row.userId, client: row.cliente ?? row.client ?? '', value: row.valor ?? row.value, datetime, date: row.data ?? row.date ?? String(datetime || '').slice(0, 10), products: row.produtos ?? row.products ?? [] }; }
+            if (table === 'atendimentos') { const datetime = row.data_hora ?? row.datetime; return { ...row, userId: row.vendedor_id ?? row.userId, client: row.cliente ?? row.client ?? '', outcome: row.resultado ?? row.outcome, outcomeLabel: row.resultado_label ?? row.outcomeLabel, value: row.valor ?? row.value ?? 0, phone: row.telefone ?? row.phone ?? '', notes: row.observacao ?? row.notes ?? '', products: row.produtos ?? row.products ?? [], shownProducts: row.produtos_apresentados ?? row.shownProducts ?? [], demand: row.demanda ?? row.demand ?? '', saleId: row.venda_id ?? row.saleId, conditionalId: row.condicional_id ?? row.conditionalId, datetime, date: row.data ?? row.date ?? String(datetime || '').slice(0, 10) }; }
             if (table === 'condicionais') return { ...row, userId: row.vendedor_id ?? row.userId, client: row.cliente ?? row.client, phone: row.telefone ?? row.phone, observation: row.observacao ?? row.observation ?? '', products: row.produtos ?? row.products ?? [], dueDate: row.prazo ?? row.dueDate, status: row.status ?? 'aberta', taskId: row.task_id ?? row.taskId, createdAt: row.created_at ?? row.createdAt };
             if (table === 'metas') return { ...row, lojaId: row.loja_id, userId: row.vendedor_id, weekStart: row.semana_inicio, weekEnd: row.semana_fim, bronze: Number(row.bronze || 0), silver: Number(row.prata || 0), gold: Number(row.ouro || 0), diamond: Number(row.diamante || 0), month: String(row.mes_referencia || '').slice(0, 7), monthlyBronze: Number(row.mensal_bronze ?? 0), monthlySilver: Number(row.mensal_prata ?? 0), monthlyGold: Number(row.mensal_ouro ?? 0), monthlyDiamond: Number(row.mensal_diamante ?? row.meta_mensal ?? 0), monthly: Number(row.mensal_diamante ?? row.meta_mensal ?? 0) };
             if (table === 'conteudos') return { ...row, type: row.tipo, text: row.texto, author: row.autor || '', mood: row.humor || row.mood || '', active: row.ativo !== false };
@@ -1797,7 +1797,7 @@
 
         async function bootstrapSupabase() {
             const { data } = await sigaSupabase.auth.getSession();
-            if (data.session && !getSession()) saveSession({ type: 'master' });
+            if (data.session && getSession()?.type === 'master') saveSession({ type: 'master' });
             await hydrateFromSupabase();
             ensureDefaultMoodContents();
             if (getSession()?.type === 'user' && getSession()?.role === 'gerente' && location.hash === '#manager-goals') {
@@ -1829,10 +1829,10 @@
             try {
                 const savedTasks = JSON.parse(localStorage.getItem(taskStorageKey()));
                 if (Array.isArray(savedTasks) && savedTasks.length) return savedTasks;
-                const today = new Date().toISOString().split('T')[0];
+                const today = getLocalDateKey();
                 return defaultTasks.map(task => ({ ...task, date: task.date || today }));
             } catch (error) {
-                const today = new Date().toISOString().split('T')[0];
+                const today = getLocalDateKey();
                 return defaultTasks.map(task => ({ ...task, date: task.date || today }));
             }
         }
@@ -1879,6 +1879,10 @@
         function isTaskOverdue(task) {
             if (task.completed) return false;
             const now = new Date();
+            const taskDate = taskDateValue(task);
+            const today = getLocalDateKey(now);
+            if (taskDate > today) return false;
+            if (taskDate < today) return true;
             const [hours, minutes] = task.time.split(':').map(Number);
             return hours < now.getHours() || (hours === now.getHours() && minutes < now.getMinutes());
         }
@@ -1924,7 +1928,7 @@
                     ${task.completed ? '<i data-lucide="check" class="w-4 h-4"></i>' : ''}
                 </button>
                 <div class="min-w-0 flex-1">
-                    <p class="truncate text-xs font-bold ${task.completed ? 'text-emerald-800 line-through' : 'text-slate-700'}">${task.title}</p>
+                    <p class="truncate text-xs font-bold ${task.completed ? 'text-emerald-800 line-through' : 'text-slate-700'}">${escapeHtml(task.title)}</p>
                     <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] font-semibold text-slate-400">
                         <span class="flex items-center gap-1"><i data-lucide="clock-3" class="w-3 h-3"></i>${task.time}</span>
                         <span>${ownerLabel}</span>
@@ -1956,7 +1960,8 @@
 
         function renderTasks() {
             const tasks = sortedTasks();
-            document.getElementById('routine-preview').innerHTML = tasks.slice(0, 3).map(task => renderTask(task)).join('');
+            const todayTasks = tasks.filter(task => taskDateValue(task) === getLocalDateKey());
+            document.getElementById('routine-preview').innerHTML = todayTasks.slice(0, 3).map(task => renderTask(task)).join('');
             document.getElementById('tasks-list').innerHTML = tasks.length ? tasks.map(task => renderTask(task, true)).join('') : '<p class="rounded-2xl bg-white p-4 text-xs text-slate-400">Nenhuma tarefa registrada.</p>';
             lucide.createIcons();
         }
@@ -2222,7 +2227,7 @@
             const standaloneSales = getSales().filter(sale => !linkedSales.has(sale.id)).map(sale => ({ id: `sale-service-${sale.id}`, saleId: sale.id, client: sale.client, outcome: 'converted', outcomeLabel: 'Venda realizada', value: sale.value, products: sale.products || [], notes: 'Venda registrada diretamente na tela de vendas.', datetime: sale.datetime, date: sale.date }));
             const standaloneConditionals = getConditionals().filter(item => !linkedConditionals.has(item.id)).map(item => ({ id: `conditional-service-${item.id}`, conditionalId: item.id, client: item.client, outcome: 'conditional', outcomeLabel: 'Levou condicional', products: item.products || [], notes: item.observation || 'Condicional registrada diretamente na tela de condicionais.', datetime: item.createdAt, date: item.createdAt.slice(0, 10) }));
             const services = [...savedServices, ...standaloneSales, ...standaloneConditionals];
-            if (servicePeriod === 'month') return services.filter(item => item.date.slice(0, 7) === serviceSelectedDate.slice(0, 7));
+            if (servicePeriod === 'month') return services.filter(item => String(item.date || item.datetime || '').slice(0, 7) === serviceSelectedDate.slice(0, 7));
             if (servicePeriod === 'week') {
                 return services.filter(item => item.date >= serviceWeekStart && item.date <= serviceWeekEnd);
             }
@@ -2799,8 +2804,10 @@
                 const resolveConditionalButton = event.target.closest('[data-resolve-conditional]');
                 if (resolveConditionalButton) {
                     const conditionals = getConditionals();
+                    const conditional = conditionals.find(item => item.id === resolveConditionalButton.dataset.resolveConditional);
                     saveConditionals(conditionals.map(item => item.id === resolveConditionalButton.dataset.resolveConditional ? { ...item, status: 'resolvida' } : item));
-                    renderConditionals(); renderDashboardConditionals();
+                    if (conditional?.taskId) saveTasks(getTasks().map(task => task.id === conditional.taskId ? { ...task, completed: true } : task));
+                    renderConditionals(); renderDashboardConditionals(); refreshTaskViews();
                 }
 
                 const editButton = event.target.closest('[data-edit-task]');
