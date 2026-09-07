@@ -692,18 +692,24 @@
             const pending = pendingSupabaseSyncs.get(storageKey);
             if (!pending) return;
             pendingSupabaseSyncs.delete(storageKey);
-            if (pending.removedIds.length) {
-                const { error: deleteError } = await sigaSupabase.from(table).delete().in('id', pending.removedIds);
+            const validRemovedIds = pending.removedIds.filter(isSupabaseUuid);
+            if (validRemovedIds.length) {
+                const { error: deleteError } = await sigaSupabase.from(table).delete().in('id', validRemovedIds);
                 if (deleteError) console.warn(`Falha ao excluir de ${table}:`, deleteError.message);
             }
             const scopedUserId = storageKey.match(/::([^:]+)$/)?.[1] || null;
-            const rows = pending.list.map(item => table === 'lojas' ? { id: item.id, nome: item.name, slug: item.slug, configuracoes: item.configuracoes || {}, created_at: item.createdAt } : table === 'perfis' ? { id: item.id, loja_id: item.lojaId, nome: item.name, cargo: item.role, username: item.username, password: item.password, slug: item.slug, full_slug: item.fullSlug, created_at: item.createdAt } : databaseRowFromApp(table, item, scopedUserId));
+            const syncableList = table === 'tarefas' ? pending.list.filter(item => isSupabaseUuid(item.id)) : pending.list;
+            const rows = syncableList.map(item => table === 'lojas' ? { id: item.id, nome: item.name, slug: item.slug, configuracoes: item.configuracoes || {}, created_at: item.createdAt } : table === 'perfis' ? { id: item.id, loja_id: item.lojaId, nome: item.name, cargo: item.role, username: item.username, password: item.password, slug: item.slug, full_slug: item.fullSlug, created_at: item.createdAt } : databaseRowFromApp(table, item, scopedUserId));
             if (!rows.length) return;
             const { error } = await sigaSupabase.from(table).upsert(rows);
             if (error) {
                 console.warn(`Falha ao sincronizar ${table}:`, error.message);
                 showToast(`Dados mantidos neste dispositivo. Sincronização pendente em ${table}.`, 'error');
             }
+        }
+
+        function isSupabaseUuid(value) {
+            return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || ''));
         }
 
         let lastSupabaseHydration = 0;
@@ -1859,7 +1865,7 @@
             endDate.setFullYear(endDate.getFullYear() + 2);
             for (; cursor <= endDate; cursor.setDate(cursor.getDate() + 1)) {
                 if (!repeatDays.includes(cursor.getDay())) continue;
-                tasks.push({ id: `${seriesId}-${getLocalDateKey(cursor)}`, title, time, owner: currentTaskOwnerRole(), completed: false, observation: '', date: getLocalDateKey(cursor), seriesId, repeatDays });
+                tasks.push({ id: crypto.randomUUID(), title, time, owner: currentTaskOwnerRole(), completed: false, observation: '', date: getLocalDateKey(cursor), seriesId, repeatDays });
             }
             return tasks;
         }
