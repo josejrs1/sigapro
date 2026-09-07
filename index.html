@@ -31,7 +31,7 @@
         #site-toast { position: fixed; left: 1rem; right: 1rem; bottom: 1rem; z-index: 110; display: none; }
         :root { --surface: #ffffff; --canvas: #f7f9fc; --line: #e7ebf2; --ink: #172033; --muted: #718096; --brand: #4f46e5; }
         * { box-sizing: border-box; }
-        body { background: var(--canvas); color: var(--ink); letter-spacing: 0; }
+        body { background: var(--canvas); color: var(--ink); letter-spacing: 0; overflow-x: hidden; }
         button, input, select, textarea { font: inherit; }
         button { -webkit-tap-highlight-color: transparent; }
         button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px solid rgba(99, 102, 241, 0.25); outline-offset: 2px; }
@@ -49,8 +49,7 @@
         #mobile-navigation { position: fixed !important; left: 0; right: 0; bottom: 0; width: 100%; z-index: 60; }
         #fab-button { position: fixed !important; right: 1rem; bottom: 5.75rem; width: 3.75rem; height: 3.75rem; max-width: calc(100vw - 2rem); z-index: 55; }
         #manager-bar { overflow: hidden; }
-        #manager-bar > div > div:last-child { min-width: 0; max-width: 100%; overflow-x: auto; scrollbar-width: none; }
-        #manager-bar > div > div:last-child::-webkit-scrollbar { display: none; }
+        #manager-bar > div > div:last-child { min-width: 0; max-width: 100%; }
         #mobile-navigation button { min-width: 3.5rem; }
         #mood-card { min-height: 11rem; }
         #mood-card .mood-option { min-height: 3.5rem; }
@@ -61,6 +60,7 @@
         input::placeholder, textarea::placeholder { color: #a0aec0; }
         @media (max-width: 767px) {
             body { padding-bottom: 5.5rem; }
+            #app-shell { padding-bottom: 1rem; }
             #app-shell > header > div:first-child { padding-left: 1rem; padding-right: 1rem; }
             #app-shell > header .text-xl { font-size: 1.05rem; }
             #dashboard-page, #tasks-page, #sales-page, #service-page, #conditional-page, #manager-overview-page, #manager-report-page, #manager-goals-page { width: calc(100% - 1.25rem); padding-left: 0; padding-right: 0; }
@@ -70,8 +70,9 @@
             #dashboard-page h2 { font-size: 1.35rem; }
             #total-vendas { font-size: 1.65rem; }
             #manager-bar > div { align-items: stretch; }
-            #manager-bar > div > div:last-child { width: 100%; overflow-x: auto; padding-bottom: 0.15rem; }
-            #manager-bar button, #manager-bar select { flex: 0 0 auto; }
+            #manager-bar > div > div:last-child { width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.4rem; padding-bottom: 0.15rem; }
+            #manager-bar > div > div:last-child select { grid-column: 1 / -1; width: 100%; }
+            #manager-bar button, #manager-bar select { min-width: 0; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
             #mood-card .grid-cols-6 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
             #goal-markers { top: 1.25rem; }
             #goal-markers button span:last-child { font-size: 7px; }
@@ -1035,7 +1036,7 @@
             const viewingVendor = vendors.find(vendor => vendor.id === session.viewingUserId);
             const inVendorPanel = Boolean(viewingVendor);
             document.getElementById('desktop-navigation').classList.toggle('hidden', !inVendorPanel);
-            document.getElementById('mobile-navigation').classList.toggle('hidden', !inVendorPanel);
+            document.getElementById('mobile-navigation').classList.toggle('hidden', !inVendorPanel && session.role !== 'gerente');
             document.getElementById('fab-button').classList.toggle('hidden', !inVendorPanel);
             document.getElementById('manager-bar-label').textContent = inVendorPanel ? `Painel de: ${escapeHtml(viewingVendor.name)}` : `Loja: ${escapeHtml(getLojas().find(store => store.id === session.lojaId)?.name || '')}`;
         }
@@ -1917,7 +1918,7 @@
 
         function renderTask(task, showActions = false) {
             const ownerLabel = task.owner === 'manager' ? 'Gerente' : 'Você';
-            const locked = task.owner === 'manager' && getSession()?.role !== 'gerente';
+            const locked = false;
             return `<article class="task-item flex items-center gap-3 rounded-2xl border p-3 ${taskStatusClasses(task)} transition-colors" data-task-id="${task.id}">
                 <button type="button" data-toggle-task="${task.id}" aria-label="${task.completed ? 'Reabrir' : 'Concluir'} tarefa" class="w-6 h-6 shrink-0 rounded-lg border-2 ${task.completed ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-indigo-200 bg-white'} flex items-center justify-center">
                     ${task.completed ? '<i data-lucide="check" class="w-4 h-4"></i>' : ''}
@@ -2805,7 +2806,7 @@
                 const editButton = event.target.closest('[data-edit-task]');
                 if (editButton) {
                     const task = getTasks().find(item => item.id === editButton.dataset.editTask);
-                    if (!task || (task.owner === 'manager' && getSession()?.role !== 'gerente')) return;
+                    if (!task) return;
                     if (isPastTask(task)) return showToast('Tarefas de dias passados ficam registradas e não podem ser alteradas.');
                     const scope = askTaskScope(task, 'Editar');
                     if (!scope) return;
@@ -2823,7 +2824,7 @@
                 const deleteButton = event.target.closest('[data-delete-task]');
                 if (deleteButton) {
                     const task = getTasks().find(item => item.id === deleteButton.dataset.deleteTask);
-                    const deletable = task && (task.owner !== 'manager' || getSession()?.role === 'gerente');
+                    const deletable = Boolean(task);
                     if (deletable && !isPastTask(task) && window.confirm('Excluir esta tarefa?')) {
                         const scope = askTaskScope(task, 'Excluir');
                         if (!scope) return;
