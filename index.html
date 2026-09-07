@@ -510,7 +510,7 @@
         </section>
         <div class="grid gap-3 md:grid-cols-3"><div class="rounded-2xl bg-indigo-600 p-5 text-white"><p class="text-[10px] font-black uppercase">Vendas equipe</p><p id="manager-report-total" class="mt-1 text-3xl font-black">R$ 0,00</p></div><div class="rounded-2xl bg-emerald-500 p-5 text-white"><p class="text-[10px] font-black uppercase">Quantidade</p><p id="manager-report-count" class="mt-1 text-3xl font-black">0</p></div><div class="rounded-2xl bg-amber-400 p-5 text-white"><p class="text-[10px] font-black uppercase">Meta mensal loja</p><p id="manager-store-goal-total" class="mt-1 text-3xl font-black">R$ 0,00</p></div></div>
         <section class="rounded-[2rem] border border-slate-100 bg-white p-5 shadow-sm"><h3 class="mb-3 text-sm font-black uppercase tracking-wider text-slate-800">Vendas por vendedor</h3><div id="manager-report-list" class="space-y-2"></div></section>
-        <section class="rounded-[2rem] border border-emerald-100 bg-white p-5 shadow-sm"><h3 class="mb-3 text-sm font-black uppercase tracking-wider text-slate-800">Venda da loja para meta mensal</h3><form id="manager-store-sale-form" class="grid gap-3 md:grid-cols-4"><input id="manager-store-sale-client" required placeholder="Nome/descrição" class="rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none"><input id="manager-store-sale-value" required type="number" min="0.01" step="0.01" placeholder="Valor" class="rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none"><input id="manager-store-sale-date" required type="date" class="rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none"><button type="submit" class="rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-black text-white">Lançar venda da loja</button></form></section>
+        <section class="rounded-[2rem] border border-emerald-100 bg-white p-5 shadow-sm"><h3 class="mb-3 text-sm font-black tracking-wider text-slate-800">Venda da loja para meta mensal</h3><form id="manager-store-sale-form" class="grid gap-3 md:grid-cols-4"><input id="manager-store-sale-client" required placeholder="Nome/descrição" class="rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none"><input id="manager-store-sale-value" required inputmode="decimal" data-money-input placeholder="R$ 0,00" class="rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none"><input id="manager-store-sale-date" required type="date" class="rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none"><button type="submit" class="rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-black text-white">Lançar venda da loja</button></form><div id="manager-store-sales-list" class="mt-4 space-y-2"></div></section>
     </section>
 
     <!-- CONFIGURAÇÃO DE METAS DO GERENTE -->
@@ -1258,6 +1258,20 @@
             const storeGoals = getMonthlyGoals().filter(goal => goal.lojaId === session?.lojaId && goal.month === getLocalDateKey().slice(0, 7));
             document.getElementById('manager-store-goal-total').textContent = money(storeGoals.reduce((sum, goal) => sum + Number(goal.total || 0), 0));
             document.getElementById('manager-report-list').innerHTML = Object.keys(grouped).length ? Object.entries(grouped).map(([name, value]) => `<div class="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2"><span class="text-xs font-bold text-slate-700">${escapeHtml(name)}</span><strong class="text-sm font-black text-indigo-600">${money(value)}</strong></div>`).join('') : '<p class="text-xs text-slate-400">Nenhuma venda no período.</p>';
+            renderManagerStoreSales();
+        }
+
+        function getManagerStoreSales() {
+            const session = getSession();
+            return readStoredList(`siga-vendas-loja::${session?.lojaId}`).sort((first, second) => second.date.localeCompare(first.date));
+        }
+
+        function renderManagerStoreSales() {
+            const target = document.getElementById('manager-store-sales-list');
+            if (!target) return;
+            const sales = getManagerStoreSales();
+            target.innerHTML = sales.length ? sales.map(sale => `<article class="flex items-center justify-between gap-3 rounded-xl bg-emerald-50 px-3 py-2"><div class="min-w-0"><p class="truncate text-xs font-bold text-slate-700">${escapeHtml(sale.client)}</p><p class="text-[10px] font-semibold text-slate-400">${new Date(`${sale.date}T12:00:00`).toLocaleDateString('pt-BR')}</p></div><div class="flex items-center gap-2"><strong class="text-sm font-black text-emerald-600">${money(sale.value)}</strong><button type="button" data-edit-manager-store-sale="${sale.id}" aria-label="Editar venda da loja" class="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-white hover:text-indigo-600"><i data-lucide="pencil" class="h-4 w-4"></i></button><button type="button" data-delete-manager-store-sale="${sale.id}" aria-label="Excluir venda da loja" class="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-white hover:text-red-600"><i data-lucide="trash-2" class="h-4 w-4"></i></button></div></article>`).join('') : '<p class="text-xs text-slate-400">Nenhuma venda da loja lançada.</p>';
+            lucide.createIcons();
         }
 
         function initManagerReport() {
@@ -1274,11 +1288,37 @@
                 event.preventDefault();
                 const session = getSession();
                 const storeKey = `siga-vendas-loja::${session.lojaId}`;
-                let sales = []; try { sales = JSON.parse(localStorage.getItem(storeKey)) || []; } catch (error) { sales = []; }
-                sales.push({ id: crypto.randomUUID(), client: document.getElementById('manager-store-sale-client').value.trim(), value: parseBrazilianNumber(document.getElementById('manager-store-sale-value').value), date: document.getElementById('manager-store-sale-date').value, datetime: `${document.getElementById('manager-store-sale-date').value}T12:00:00`, storeSale: true });
-                localStorage.setItem(storeKey, JSON.stringify(sales));
-                syncStoredList(`siga-vendas-loja::${session.lojaId}`, sales);
-                event.target.reset(); document.getElementById('manager-store-sale-date').value = getLocalDateKey();
+                const value = parseBrazilianNumber(document.getElementById('manager-store-sale-value').value);
+                if (!value || value <= 0) { showToast('Informe um valor de venda válido.'); return; }
+                const sales = getManagerStoreSales();
+                const editingId = event.target.dataset.editingId;
+                const sale = { id: editingId || crypto.randomUUID(), client: document.getElementById('manager-store-sale-client').value.trim(), value, date: document.getElementById('manager-store-sale-date').value, datetime: `${document.getElementById('manager-store-sale-date').value}T12:00:00`, storeSale: true, lojaId: session.lojaId };
+                const updatedSales = editingId ? sales.map(item => item.id === editingId ? sale : item) : [...sales, sale];
+                localStorage.setItem(storeKey, JSON.stringify(updatedSales));
+                syncStoredList(storeKey, updatedSales);
+                event.target.reset(); event.target.dataset.editingId = ''; document.getElementById('manager-store-sale-date').value = getLocalDateKey(); renderManagerReport(); showToast(editingId ? 'Venda da loja atualizada.' : 'Venda da loja lançada.');
+            });
+            document.getElementById('manager-store-sales-list').addEventListener('click', event => {
+                const editButton = event.target.closest('[data-edit-manager-store-sale]');
+                if (editButton) {
+                    const sale = getManagerStoreSales().find(item => item.id === editButton.dataset.editManagerStoreSale);
+                    if (!sale) return;
+                    document.getElementById('manager-store-sale-form').dataset.editingId = sale.id;
+                    document.getElementById('manager-store-sale-client').value = sale.client;
+                    document.getElementById('manager-store-sale-value').value = sale.value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    document.getElementById('manager-store-sale-date').value = sale.date;
+                    showToast('Edite os dados e salve novamente.');
+                    return;
+                }
+                const deleteButton = event.target.closest('[data-delete-manager-store-sale]');
+                if (deleteButton) {
+                    const sales = getManagerStoreSales();
+                    const updatedSales = sales.filter(item => item.id !== deleteButton.dataset.deleteManagerStoreSale);
+                    localStorage.setItem(`siga-vendas-loja::${getSession().lojaId}`, JSON.stringify(updatedSales));
+                    syncStoredList(`siga-vendas-loja::${getSession().lojaId}`, updatedSales, [deleteButton.dataset.deleteManagerStoreSale]);
+                    renderManagerReport();
+                    showToast('Venda da loja excluída.');
+                }
             });
             renderManagerReport();
         }
