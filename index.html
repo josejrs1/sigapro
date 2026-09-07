@@ -60,9 +60,10 @@
     <!-- LOGIN DE LOJA/PESSOA -->
     <div id="view-pessoa-login" class="hidden min-h-screen items-center justify-center bg-[#FBFDFF] p-6">
         <form id="pessoa-login-form" class="w-full max-w-sm rounded-[2rem] border border-slate-100 bg-white p-8 shadow-xl">
-            <div class="mb-6 text-center"><div class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-600 text-white"><i data-lucide="log-in" class="h-6 w-6"></i></div><h1 id="pessoa-login-title" class="text-lg font-black text-slate-800">Acesso da equipe</h1><p id="pessoa-login-subtitle" class="text-xs text-slate-400">Informe seu login e senha</p></div>
-            <label class="mb-3 block text-[10px] font-black uppercase tracking-wider text-slate-400">Login<input id="pessoa-username-input" required class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-medium outline-none focus:border-indigo-400"></label>
-            <label class="mb-4 block text-[10px] font-black uppercase tracking-wider text-slate-400">Senha<input id="pessoa-password-input" type="password" required class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-medium outline-none focus:border-indigo-400"></label>
+            <div class="mb-6 text-center"><div class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-600 text-white"><i data-lucide="log-in" class="h-6 w-6"></i></div><h1 class="text-lg font-black text-slate-800">Acesso da equipe</h1><p id="pessoa-login-subtitle" class="text-xs text-slate-400">Escolha sua loja, seu nome e informe a senha</p></div>
+            <label class="mb-3 block text-[10px] font-black uppercase tracking-wider text-slate-400">Loja<select id="pessoa-store-input" required class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-bold outline-none"><option value="">Selecione a loja</option></select></label>
+            <label class="mb-3 block text-[10px] font-black uppercase tracking-wider text-slate-400">Seu nome<select id="pessoa-user-input" required disabled class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-bold outline-none"><option value="">Selecione seu nome</option></select></label>
+            <label class="mb-4 block text-[10px] font-black uppercase tracking-wider text-slate-400">Senha numérica<input id="pessoa-password-input" type="password" inputmode="numeric" pattern="[0-9]+" required class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-medium outline-none focus:border-indigo-400"></label>
             <p id="pessoa-login-error" class="mb-3 min-h-4 text-center text-[10px] font-bold text-red-500"></p>
             <button type="submit" class="w-full rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-black text-white hover:bg-indigo-700">Entrar</button>
         </form>
@@ -111,7 +112,7 @@
                     <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 sm:col-span-2">Nome completo<input id="usuario-name-input" required class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-medium outline-none focus:border-indigo-400"></label>
                     <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400">Função<select id="usuario-role-input" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-medium outline-none focus:border-indigo-400"><option value="vendedor">Vendedor</option><option value="gerente">Gerente</option></select></label>
                     <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400">Login<input id="usuario-username-input" required class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-medium outline-none focus:border-indigo-400"></label>
-                    <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 sm:col-span-2">Senha<input id="usuario-password-input" required class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-medium outline-none focus:border-indigo-400"></label>
+                    <label class="block text-[10px] font-black uppercase tracking-wider text-slate-400 sm:col-span-2">Senha numérica<input id="usuario-password-input" required inputmode="numeric" pattern="[0-9]+" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-medium outline-none focus:border-indigo-400"></label>
                     <div class="flex justify-end gap-2 sm:col-span-2"><button type="button" id="cancel-usuario-edit" class="hidden rounded-xl px-4 py-2.5 text-xs font-bold text-slate-500">Cancelar edição</button><button type="submit" class="rounded-xl bg-emerald-500 px-5 py-2.5 text-xs font-black text-white hover:bg-emerald-600">Salvar acesso</button></div>
                 </form>
                 <div id="usuario-list" class="space-y-2"></div>
@@ -289,7 +290,9 @@
                         <i data-lucide="smile" class="w-4 h-4 text-orange-400"></i>
                         Registro de Humor
                     </p>
-                    <button id="toggle-mood-history" type="button" aria-expanded="true" aria-controls="mood-history" aria-label="Ocultar histórico de humor" class="hidden">
+                    <button id="toggle-mood-history" type="button" aria-expanded="false" aria-controls="mood-history" aria-label="Mostrar histórico de humor" class="w-8 h-8 shrink-0 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-indigo-100 hover:text-indigo-600 transition-colors">
+                        <i data-lucide="plus" class="w-4 h-4"></i>
+                    </button>
                         <i data-lucide="plus" class="w-4 h-4"></i>
                     </button>
                 </div>
@@ -297,7 +300,7 @@
                 <div id="mood-options" class="grid grid-cols-6 gap-1.5" role="group" aria-label="Escolha seu humor de hoje"></div>
                 <div id="mood-options" class="hidden" role="group" aria-label="Escolha seu humor de hoje"></div>
 
-                <div id="mood-history" class="mt-5 border-t border-slate-100 pt-5" aria-hidden="false">
+                <div id="mood-history" class="hidden mt-5 border-t border-slate-100 pt-5" aria-hidden="true">
                     <div class="flex items-center justify-between mb-3">
                         <div>
                             <h4 class="text-sm font-bold text-slate-800">Últimos 30 dias</h4>
@@ -652,7 +655,7 @@
                         }, {});
                         Object.entries(groups).forEach(([userId, items]) => {
                             const key = `${storageKey}::${userId}`;
-                            writeStoredList(key, mergeStoredLists(readStoredList(key), items));
+                            writeStoredList(key, table === 'tarefas' ? items : mergeStoredLists(readStoredList(key), items));
                         });
                     } else writeStoredList(storageKey, mergeStoredLists(readStoredList(storageKey), list));
                 }
@@ -866,24 +869,29 @@
             }
             if (session?.type === 'master') { location.hash = 'master'; return; }
             if (session?.type === 'user') { location.hash = 'app'; return; }
-            showFlexView('view-landing');
+            showPersonLogin('');
         }
 
         function showPersonLogin(fullSlug) {
             const normalizedSlug = normalizeAccessSlug(fullSlug);
-            const usuario = findUsuarioByAccessSlug(normalizedSlug);
-            const loja = usuario ? getLojas().find(item => item.id === usuario.lojaId) : null;
             showFlexView('view-pessoa-login');
             const form = document.getElementById('pessoa-login-form');
             form.dataset.fullSlug = normalizedSlug;
             document.getElementById('pessoa-login-error').textContent = '';
-            if (usuario && loja) {
-                document.getElementById('pessoa-login-title').textContent = loja.name;
-                document.getElementById('pessoa-login-subtitle').textContent = `Acesso de ${usuario.role === 'gerente' ? 'gerente' : 'vendedor'}: ${usuario.name}`;
-            } else {
-                document.getElementById('pessoa-login-title').textContent = 'Link inválido';
-                document.getElementById('pessoa-login-subtitle').textContent = 'Verifique o link com o administrador da loja.';
-            }
+            const stores = getLojas();
+            const storeSelect = document.getElementById('pessoa-store-input');
+            storeSelect.innerHTML = '<option value="">Selecione a loja</option>' + stores.map(store => `<option value="${store.id}">${escapeHtml(store.name)}</option>`).join('');
+            const linkedUser = normalizedSlug ? findUsuarioByAccessSlug(normalizedSlug) : null;
+            storeSelect.value = linkedUser?.lojaId || '';
+            populatePersonUsers(storeSelect.value, linkedUser?.id || '');
+        }
+
+        function populatePersonUsers(lojaId, selectedId = '') {
+            const userSelect = document.getElementById('pessoa-user-input');
+            const users = getUsuarios().filter(user => user.lojaId === lojaId);
+            userSelect.innerHTML = '<option value="">Selecione seu nome</option>' + users.map(user => `<option value="${user.id}">${escapeHtml(user.name)}</option>`).join('');
+            userSelect.disabled = !lojaId;
+            userSelect.value = selectedId;
         }
 
         function startAppIfNeeded() {
@@ -1550,17 +1558,16 @@
 
             document.getElementById('pessoa-login-form').addEventListener('submit', event => {
                 event.preventDefault();
-                const fullSlug = normalizeAccessSlug(event.target.dataset.fullSlug);
-                const usuario = findUsuarioByAccessSlug(fullSlug);
-                const username = document.getElementById('pessoa-username-input').value.trim();
+                const usuario = getUsuarios().find(item => item.id === document.getElementById('pessoa-user-input').value && item.lojaId === document.getElementById('pessoa-store-input').value);
                 const password = document.getElementById('pessoa-password-input').value;
-                if (!usuario || usuario.username !== username || usuario.password !== password) {
+                if (!usuario || !/^\d+$/.test(password) || String(usuario.password) !== password) {
                     document.getElementById('pessoa-login-error').textContent = 'Login ou senha inválidos.';
                     return;
                 }
                 saveSession({ type: 'user', userId: usuario.id, role: usuario.role, lojaId: usuario.lojaId, name: usuario.name, viewingUserId: null });
                 location.hash = 'app';
             });
+            document.getElementById('pessoa-store-input').addEventListener('change', event => populatePersonUsers(event.target.value));
 
             document.getElementById('loja-form').addEventListener('submit', event => {
                 event.preventDefault();
@@ -1592,7 +1599,7 @@
                 const role = document.getElementById('usuario-role-input').value;
                 const username = document.getElementById('usuario-username-input').value.trim();
                 const password = document.getElementById('usuario-password-input').value;
-                if (!name || !username || !password) return;
+                if (!name || !username || !password || !/^\d+$/.test(password)) { showToast('A senha deve conter apenas números.'); return; }
                 const loja = getLojas().find(item => item.id === selectedLojaId);
                 const usuarios = getUsuarios();
                 if (editingId) {
