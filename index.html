@@ -29,6 +29,53 @@
         .observation-preview.observation-expanded { max-height: none; }
         #sync-error { position: fixed; left: 1rem; right: 1rem; bottom: 1rem; z-index: 100; display: none; }
         #site-toast { position: fixed; left: 1rem; right: 1rem; bottom: 1rem; z-index: 110; display: none; }
+        :root { --surface: #ffffff; --canvas: #f7f9fc; --line: #e7ebf2; --ink: #172033; --muted: #718096; --brand: #4f46e5; }
+        * { box-sizing: border-box; }
+        body { background: var(--canvas); color: var(--ink); letter-spacing: 0; }
+        button, input, select, textarea { font: inherit; }
+        button { -webkit-tap-highlight-color: transparent; }
+        button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px solid rgba(99, 102, 241, 0.25); outline-offset: 2px; }
+        #app-shell > header { background: rgba(255, 255, 255, 0.92); box-shadow: 0 1px 0 var(--line); }
+        #app-shell > header > div:first-child { min-height: 4.25rem; }
+        #dashboard-page, #tasks-page, #sales-page, #service-page, #conditional-page, #manager-overview-page, #manager-report-page, #manager-goals-page { width: min(100% - 2rem, 64rem); }
+        #dashboard-page > section, #dashboard-page > div > section, #tasks-page > *, #sales-page > *, #service-page > *, #conditional-page > *, #manager-overview-page > *, #manager-report-page > *, #manager-goals-page > * { border-color: var(--line); }
+        #dashboard-page > section:not(:first-child), #dashboard-page > div > section, #dashboard-page > section + section { box-shadow: 0 12px 30px rgba(30, 41, 59, 0.045); }
+        #dashboard-page > section:first-child { padding-top: 1.5rem; padding-bottom: 1.25rem; }
+        #dashboard-page h2, #tasks-page h2, #sales-page h2, #service-page h2, #conditional-page h2, #manager-overview-page h2, #manager-report-page h2, #manager-goals-page h2 { letter-spacing: -0.02em; }
+        .desktop-nav-button { min-height: 2.5rem; }
+        #manager-bar > div { min-height: 2.75rem; }
+        #manager-bar button, #manager-bar select { min-height: 2.25rem; }
+        #mobile-navigation { box-shadow: 0 -8px 24px rgba(30, 41, 59, 0.08); }
+        #mobile-navigation button { min-width: 3.5rem; }
+        #mood-card { min-height: 11rem; }
+        #mood-card .mood-option { min-height: 3.5rem; }
+        #goal-markers button { max-width: 4.75rem; }
+        #goal-markers button span:last-child { overflow: hidden; text-overflow: ellipsis; }
+        [role="dialog"] > div { max-height: calc(100dvh - 2rem); overflow-y: auto; }
+        input, select, textarea { border-color: var(--line); background-color: var(--surface); }
+        input::placeholder, textarea::placeholder { color: #a0aec0; }
+        @media (max-width: 767px) {
+            body { padding-bottom: 5.5rem; }
+            #app-shell > header > div:first-child { padding-left: 1rem; padding-right: 1rem; }
+            #app-shell > header .text-xl { font-size: 1.05rem; }
+            #dashboard-page, #tasks-page, #sales-page, #service-page, #conditional-page, #manager-overview-page, #manager-report-page, #manager-goals-page { width: calc(100% - 1.25rem); padding-left: 0; padding-right: 0; }
+            #dashboard-page { gap: 1rem; }
+            #dashboard-page > section:first-child { padding-top: 1rem; }
+            #dashboard-page > section:not(:first-child), #dashboard-page > div > section { border-radius: 1.5rem; padding: 1.125rem; }
+            #dashboard-page h2 { font-size: 1.35rem; }
+            #total-vendas { font-size: 1.65rem; }
+            #manager-bar > div { align-items: stretch; }
+            #manager-bar > div > div:last-child { width: 100%; overflow-x: auto; padding-bottom: 0.15rem; }
+            #manager-bar button, #manager-bar select { flex: 0 0 auto; }
+            #mood-card .grid-cols-6 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+            #goal-markers { top: 1.25rem; }
+            #goal-markers button span:last-child { font-size: 7px; }
+            #mobile-navigation { height: 4.5rem; padding-left: 0.5rem; padding-right: 0.5rem; }
+            #mobile-navigation span { font-size: 8px; letter-spacing: 0.04em; }
+            #mobile-navigation i { width: 1.25rem; height: 1.25rem; }
+            [role="dialog"] { padding: 0.75rem; }
+            [role="dialog"] > div { border-radius: 1.5rem; }
+        }
     </style>
 </head>
 <body class="bg-[#FBFDFF] text-slate-900 min-h-screen pb-28">
@@ -293,11 +340,8 @@
                     <button id="toggle-mood-history" type="button" aria-expanded="false" aria-controls="mood-history" aria-label="Mostrar histórico de humor" class="w-8 h-8 shrink-0 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-indigo-100 hover:text-indigo-600 transition-colors">
                         <i data-lucide="plus" class="w-4 h-4"></i>
                     </button>
-                        <i data-lucide="plus" class="w-4 h-4"></i>
-                    </button>
                 </div>
                 <p id="mood-selected-label" class="text-xs text-slate-500 mb-3">Como você está hoje?</p>
-                <div id="mood-options" class="grid grid-cols-6 gap-1.5" role="group" aria-label="Escolha seu humor de hoje"></div>
                 <div id="mood-options" class="hidden" role="group" aria-label="Escolha seu humor de hoje"></div>
 
                 <div id="mood-history" class="hidden mt-5 border-t border-slate-100 pt-5" aria-hidden="true">
