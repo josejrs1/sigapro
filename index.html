@@ -77,6 +77,11 @@
             </div>
         </header>
         <main class="mx-auto max-w-5xl space-y-6 p-4">
+            <div class="flex rounded-2xl bg-slate-100 p-1">
+                <button type="button" id="master-stores-tab" class="flex-1 rounded-xl bg-white px-4 py-2.5 text-xs font-black text-indigo-600 shadow-sm">Lojas e acessos</button>
+                <button type="button" id="master-content-tab" class="flex-1 rounded-xl px-4 py-2.5 text-xs font-black text-slate-500">Frases e dicas</button>
+            </div>
+            <div id="master-stores-view" class="space-y-6">
             <section class="rounded-[2rem] border border-slate-100 bg-white p-6 shadow-sm">
                 <h2 class="mb-4 text-lg font-black text-slate-800">Lojas cadastradas</h2>
                 <form id="loja-form" class="mb-4 flex flex-wrap gap-2">
@@ -86,7 +91,7 @@
                 <div id="loja-list" class="space-y-2"></div>
             </section>
 
-            <section class="rounded-[2rem] border border-slate-100 bg-white p-6 shadow-sm">
+            <section id="master-content-view" class="hidden rounded-[2rem] border border-slate-100 bg-white p-6 shadow-sm">
                 <div class="mb-4"><h2 class="text-lg font-black text-slate-800">Frases e dicas</h2><p class="mt-1 text-xs text-slate-400">O sistema escolhe uma frase e uma dica por dia para cada usuário.</p></div>
                 <form id="content-form" class="grid gap-3 sm:grid-cols-2">
                     <input type="hidden" id="content-editing-id">
@@ -110,6 +115,7 @@
                 </form>
                 <div id="usuario-list" class="space-y-2"></div>
             </section>
+            </div>
         </main>
     </div>
 
@@ -129,6 +135,13 @@
                 <button type="button" id="app-logout" aria-label="Sair" class="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-red-50 hover:text-red-600"><i data-lucide="log-out" class="h-4 w-4"></i></button>
             </div>
         </div>
+    <div id="mood-required-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="mood-required-title">
+        <div class="w-full max-w-md rounded-[2rem] bg-white p-6 shadow-2xl">
+            <div class="mb-5 text-center"><div class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-100 text-orange-500"><i data-lucide="heart-handshake" class="h-6 w-6"></i></div><h2 id="mood-required-title" class="text-lg font-black text-slate-800">Como você está hoje?</h2><p class="mt-1 text-xs text-slate-400">Escolha seu humor para continuar.</p></div>
+            <div id="required-mood-options" class="grid grid-cols-3 gap-2"></div>
+        </div>
+    </div>
+                            <label class="text-[10px] font-black uppercase tracking-wider text-slate-400">Humor ideal<select id="content-mood-input" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-bold outline-none"><option value="">Todos os humores</option><option value="muito-mal">Muito mal</option><option value="mal">Mal</option><option value="normal">Normal</option><option value="bem">Bem</option><option value="excelente">Excelente</option><option value="energizado">Energizado</option></select></label>
         <div id="manager-bar" class="hidden border-t border-amber-100 bg-amber-50 px-4 py-2">
             <div class="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-2">
                 <div class="flex items-center gap-2 text-xs font-bold text-amber-700"><i data-lucide="shield" class="h-4 w-4"></i><span id="manager-bar-label">Modo gerente</span></div>
@@ -275,16 +288,15 @@
                         <i data-lucide="smile" class="w-4 h-4 text-orange-400"></i>
                         Registro de Humor
                     </p>
-                    <button id="toggle-mood-history" type="button" aria-expanded="false" aria-controls="mood-history" aria-label="Mostrar histórico de humor" class="w-8 h-8 shrink-0 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-indigo-100 hover:text-indigo-600 transition-colors">
+                    <button id="toggle-mood-history" type="button" aria-expanded="true" aria-controls="mood-history" aria-label="Ocultar histórico de humor" class="hidden">
                         <i data-lucide="plus" class="w-4 h-4"></i>
                     </button>
                 </div>
                 <p id="mood-selected-label" class="text-xs text-slate-500 mb-3">Como você está hoje?</p>
                 <div id="mood-options" class="grid grid-cols-6 gap-1.5" role="group" aria-label="Escolha seu humor de hoje"></div>
-                <button id="confirm-mood" type="button" class="mt-4 w-full rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm shadow-indigo-200 hover:bg-indigo-700 transition-colors">Confirmar humor</button>
-                <p id="mood-feedback" class="mt-2 text-center text-[10px] font-semibold text-emerald-600 min-h-4" aria-live="polite"></p>
+                <div id="mood-options" class="hidden" role="group" aria-label="Escolha seu humor de hoje"></div>
 
-                <div id="mood-history" class="hidden mt-5 border-t border-slate-100 pt-5" aria-hidden="true">
+                <div id="mood-history" class="mt-5 border-t border-slate-100 pt-5" aria-hidden="false">
                     <div class="flex items-center justify-between mb-3">
                         <div>
                             <h4 class="text-sm font-bold text-slate-800">Últimos 30 dias</h4>
@@ -477,10 +489,10 @@
             <h3 class="mb-3 text-sm font-black uppercase tracking-wider text-slate-800">Lançar tarefa para a equipe</h3>
             <form id="manager-task-form" class="grid gap-3 md:grid-cols-4">
                 <input id="manager-task-title" required maxlength="120" placeholder="Nome da tarefa" class="rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none md:col-span-2">
-                <input id="manager-task-date" required type="date" class="rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-bold outline-none">
                 <input id="manager-task-time" required type="time" value="10:00" class="rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-bold outline-none">
+                <div class="rounded-xl border border-slate-200 p-3 md:col-span-4"><p class="mb-2 text-[10px] font-black uppercase tracking-wider text-slate-400">Repetir toda semana em</p><div id="manager-task-weekdays" class="grid grid-cols-4 gap-2 sm:grid-cols-7"></div></div>
                 <div class="rounded-xl border border-slate-200 p-3 md:col-span-3"><p class="mb-2 text-[10px] font-black uppercase tracking-wider text-slate-400">Vendedores selecionados</p><div id="manager-task-vendors" class="grid gap-2 sm:grid-cols-3"></div></div>
-                <button type="submit" class="rounded-xl bg-amber-500 px-4 py-2.5 text-xs font-black text-white hover:bg-amber-600">Lançar tarefa</button>
+                <button type="submit" class="rounded-xl bg-amber-500 px-4 py-2.5 text-xs font-black text-white hover:bg-amber-600">Lançar tarefas</button>
             </form>
             <p id="manager-task-feedback" class="mt-2 min-h-4 text-center text-[10px] font-bold text-emerald-600"></p>
         </section>
@@ -586,7 +598,7 @@
             if (table === 'atendimentos') return { id: item.id, loja_id: getSession()?.lojaId || null, vendedor_id: item.userId || effectiveUserId(), cliente: item.client || '', resultado: item.outcome, resultado_label: item.outcomeLabel || '', valor: item.value || 0, telefone: item.phone || '', observacao: item.notes || '', produtos: item.products || [], produtos_apresentados: item.shownProducts || [], demanda: item.demand || '', venda_id: item.saleId || null, condicional_id: item.conditionalId || null, data_hora: item.datetime || item.dateTime };
             if (table === 'condicionais') return { id: item.id, loja_id: getSession()?.lojaId || null, vendedor_id: item.userId || effectiveUserId(), cliente: item.client, telefone: item.phone, observacao: item.observation || '', produtos: item.products || [], prazo: item.dueDate || null, status: item.status || 'aberta', task_id: item.taskId || null, created_at: item.createdAt };
             if (table === 'metas') return { id: item.id, loja_id: item.lojaId, vendedor_id: item.userId, semana_inicio: item.weekStart, semana_fim: item.weekEnd, bronze: item.bronze, prata: item.silver, ouro: item.gold, diamante: item.diamond, mes_referencia: `${item.month}-01`, mensal_bronze: item.monthlyBronze, mensal_prata: item.monthlySilver, mensal_ouro: item.monthlyGold, mensal_diamante: item.monthlyDiamond, meta_mensal: item.monthlyDiamond };
-            if (table === 'conteudos') return { id: item.id, tipo: item.type, texto: item.text, autor: item.author || '', ativo: item.active !== false };
+            if (table === 'conteudos') return { id: item.id, tipo: item.type, texto: item.text, autor: item.author || '', humor: item.mood || null, ativo: item.active !== false };
             if (table === 'metas_mensais') return { id: item.id, loja_id: item.lojaId, mes_referencia: `${item.month}-01`, valor_total: item.total };
             if (table === 'metas_semanais') return { id: item.id, loja_id: item.lojaId, meta_mensal_id: item.monthlyGoalId, nome: item.name, semana_inicio: item.weekStart, semana_fim: item.weekEnd, valor_total: item.total, distribuicao: item.distributions || [] };
             if (table === 'vendas_loja') return { id: item.id, loja_id: item.lojaId, descricao: item.client, valor: item.value, data: item.date };
@@ -599,7 +611,7 @@
             if (table === 'atendimentos') return { ...row, userId: row.vendedor_id ?? row.userId, client: row.cliente ?? row.client ?? '', outcome: row.resultado ?? row.outcome, outcomeLabel: row.resultado_label ?? row.outcomeLabel, value: row.valor ?? row.value ?? 0, phone: row.telefone ?? row.phone ?? '', notes: row.observacao ?? row.notes ?? '', products: row.produtos ?? row.products ?? [], shownProducts: row.produtos_apresentados ?? row.shownProducts ?? [], demand: row.demanda ?? row.demand ?? '', saleId: row.venda_id ?? row.saleId, conditionalId: row.condicional_id ?? row.conditionalId, datetime: row.data_hora ?? row.datetime };
             if (table === 'condicionais') return { ...row, userId: row.vendedor_id ?? row.userId, client: row.cliente ?? row.client, phone: row.telefone ?? row.phone, observation: row.observacao ?? row.observation ?? '', products: row.produtos ?? row.products ?? [], dueDate: row.prazo ?? row.dueDate, status: row.status ?? 'aberta', taskId: row.task_id ?? row.taskId, createdAt: row.created_at ?? row.createdAt };
             if (table === 'metas') return { ...row, lojaId: row.loja_id, userId: row.vendedor_id, weekStart: row.semana_inicio, weekEnd: row.semana_fim, bronze: Number(row.bronze || 0), silver: Number(row.prata || 0), gold: Number(row.ouro || 0), diamond: Number(row.diamante || 0), month: String(row.mes_referencia || '').slice(0, 7), monthlyBronze: Number(row.mensal_bronze ?? 0), monthlySilver: Number(row.mensal_prata ?? 0), monthlyGold: Number(row.mensal_ouro ?? 0), monthlyDiamond: Number(row.mensal_diamante ?? row.meta_mensal ?? 0), monthly: Number(row.mensal_diamante ?? row.meta_mensal ?? 0) };
-            if (table === 'conteudos') return { ...row, type: row.tipo, text: row.texto, author: row.autor || '', active: row.ativo !== false };
+            if (table === 'conteudos') return { ...row, type: row.tipo, text: row.texto, author: row.autor || '', mood: row.humor || row.mood || '', active: row.ativo !== false };
             if (table === 'metas_mensais') return { ...row, lojaId: row.loja_id, month: String(row.mes_referencia || '').slice(0, 7), total: Number(row.valor_total || 0) };
             if (table === 'metas_semanais') return { ...row, lojaId: row.loja_id, monthlyGoalId: row.meta_mensal_id, name: row.nome, weekStart: row.semana_inicio, weekEnd: row.semana_fim, total: Number(row.valor_total || 0), distributions: row.distribuicao || [] };
             if (table === 'vendas_loja') return { ...row, lojaId: row.loja_id, client: row.descricao, value: Number(row.valor || 0), date: row.data, datetime: `${row.data}T12:00:00`, storeSale: true };
@@ -725,7 +737,8 @@
         function saveContents(list) { const previous = getContents(); localStorage.setItem('siga-conteudos', JSON.stringify(list)); syncStoredList('siga-conteudos', list, previous.filter(item => !list.some(next => next.id === item.id)).map(item => item.id)); }
 
         function dailyContent(type) {
-            const contents = getContents().filter(item => item.type === type && item.active !== false);
+            const todayMood = getMoodRecords()[getLocalDateKey()] || '';
+            const contents = getContents().filter(item => item.type === type && item.active !== false && (!item.mood || item.mood === todayMood));
             if (!contents.length) return null;
             const userKey = getSession()?.userId || getSession()?.type || 'visitor';
             const seed = Array.from(`${type}:${userKey}:${getLocalDateKey()}`).reduce((total, character) => ((total * 31) + character.charCodeAt(0)) >>> 0, 7);
@@ -931,13 +944,14 @@
             document.getElementById('manager-task-form').addEventListener('submit', event => {
                 event.preventDefault();
                 const title = document.getElementById('manager-task-title').value.trim();
-                const date = document.getElementById('manager-task-date').value;
                 const time = document.getElementById('manager-task-time').value;
+                const repeatDays = Array.from(document.querySelectorAll('[data-manager-task-weekday]:checked')).map(input => Number(input.value));
                 const selectedVendors = Array.from(document.querySelectorAll('[data-manager-task-vendor]:checked')).map(input => input.value);
+                if (!repeatDays.length) { document.getElementById('manager-task-feedback').textContent = 'Selecione pelo menos um dia da semana.'; return; }
                 if (!selectedVendors.length) { document.getElementById('manager-task-feedback').textContent = 'Selecione pelo menos um vendedor.'; return; }
-                selectedVendors.forEach(userId => addManagerTask(userId, { id: crypto.randomUUID(), title, time, owner: 'manager', completed: false, observation: '', date }));
+                selectedVendors.forEach(userId => createManagerRecurringTasks(userId, title, time, repeatDays));
                 document.getElementById('manager-task-feedback').textContent = `Tarefa lançada para ${selectedVendors.length} vendedor${selectedVendors.length === 1 ? '' : 'es'}.`;
-                event.target.reset(); document.getElementById('manager-task-date').value = getLocalDateKey(); renderManagerTaskVendors(); renderManagerOverview();
+                event.target.reset(); renderManagerTaskWeekdays(); renderManagerTaskVendors(); renderManagerOverview();
             });
             document.getElementById('monthly-goal-form').addEventListener('submit', event => {
                 event.preventDefault();
@@ -973,9 +987,7 @@
                 const marker = event.target.closest('[data-goal-tier]');
                 if (!marker) return;
                 const data = currentGoalData();
-                const labels = { bronze: 'Bronze', silver: 'Prata', gold: 'Ouro', diamond: 'Diamante' };
                 document.getElementById('meta-valor').textContent = money(data.goal[marker.dataset.goalTier]);
-                document.getElementById('badge-nivel').textContent = labels[marker.dataset.goalTier];
             });
             document.getElementById('manager-goals-page').addEventListener('click', event => {
                 const editWeekly = event.target.closest('[data-edit-weekly-goal]');
@@ -1092,9 +1104,29 @@
             document.getElementById('manager-task-vendors').innerHTML = vendors.map(vendor => `<label class="flex items-center gap-2 rounded-lg bg-slate-50 px-2 py-2 text-[10px] font-bold text-slate-600"><input type="checkbox" data-manager-task-vendor value="${vendor.id}" class="h-4 w-4 rounded border-slate-300 text-amber-500"><span class="truncate">${escapeHtml(vendor.name)}</span></label>`).join('');
         }
 
+        function renderManagerTaskWeekdays() {
+            const weekdays = [['1', 'Seg'], ['2', 'Ter'], ['3', 'Qua'], ['4', 'Qui'], ['5', 'Sex'], ['6', 'Sáb'], ['0', 'Dom']];
+            document.getElementById('manager-task-weekdays').innerHTML = weekdays.map(([value, label]) => `<label class="text-center text-[10px] font-bold text-slate-500"><input type="checkbox" value="${value}" data-manager-task-weekday class="peer sr-only"><span class="block cursor-pointer rounded-lg border border-slate-200 bg-white px-1 py-2 peer-checked:border-amber-400 peer-checked:bg-amber-50 peer-checked:text-amber-700">${label}</span></label>`).join('');
+        }
+
+        function createManagerRecurringTasks(userId, title, time, repeatDays) {
+            const tasks = createRecurringTasks(title, time, getLocalDateKey(), repeatDays).map(task => ({ ...task, owner: 'manager' }));
+            const key = `siga-tarefas::${userId}`;
+            const current = readStoredList(key);
+            const updated = [...current, ...tasks];
+            localStorage.setItem(key, JSON.stringify(updated));
+            const session = getSession();
+            const previousViewing = session.viewingUserId;
+            session.viewingUserId = userId;
+            saveSession(session);
+            syncStoredList(key, updated);
+            session.viewingUserId = previousViewing;
+            saveSession(session);
+        }
+
         function renderManagerOverview() {
             const session = getSession();
-            document.getElementById('manager-task-date').value ||= getLocalDateKey();
+            renderManagerTaskWeekdays();
             renderManagerTaskVendors();
             const tasks = collectAllTasksForStore(session.lojaId);
             document.getElementById('manager-overview-list').innerHTML = tasks.length ? tasks.map(task => `
@@ -1385,8 +1417,9 @@
             document.getElementById('falta-valor').textContent = money(Math.max(0, data.target - data.total));
             document.getElementById('progress-fill').style.width = `${percent}%`;
             const badge = document.getElementById('badge-nivel');
-            const tier = data.total >= Number(goal.diamond || 0) ? ['Diamante', 'tier-diamond'] : goal.gold > 0 && data.total >= Number(goal.gold) ? ['Ouro', 'tier-gold'] : goal.silver > 0 && data.total >= Number(goal.silver) ? ['Prata', 'tier-silver'] : ['Bronze', 'tier-bronze'];
-            badge.textContent = tier[0]; badge.className = `text-[10px] text-white font-black px-3 py-1 rounded-full uppercase ${tier[1]}`;
+            const tier = data.total >= Number(goal.diamond || 0) ? ['Diamante', 'tier-diamond'] : goal.gold > 0 && data.total >= Number(goal.gold) ? ['Ouro', 'tier-gold'] : goal.silver > 0 && data.total >= Number(goal.silver) ? ['Prata', 'tier-silver'] : goal.bronze > 0 && data.total >= Number(goal.bronze) ? ['Bronze', 'tier-bronze'] : null;
+            badge.className = tier ? `text-[10px] text-white font-black px-3 py-1 rounded-full uppercase ${tier[1]}` : 'hidden';
+            if (tier) badge.textContent = tier[0];
             renderGoalMarkers(goal);
             renderDashboardRanking();
         }
@@ -1413,7 +1446,7 @@
             ['frase', 'dica'].forEach(type => {
                 const target = document.getElementById(type === 'frase' ? 'phrase-list' : 'tip-list');
                 const items = contents.filter(item => item.type === type);
-                target.innerHTML = items.length ? items.map(item => `<article class="rounded-xl border border-slate-100 bg-slate-50 p-3"><div class="flex items-start justify-between gap-2"><div class="min-w-0"><p class="text-xs font-bold text-slate-700">${escapeHtml(item.text)}</p><p class="mt-1 text-[10px] text-slate-400">${escapeHtml(item.author || 'Sem autor')}</p></div><div class="flex shrink-0 gap-1"><button type="button" data-edit-content="${item.id}" aria-label="Editar conteúdo" class="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-white hover:text-indigo-600"><i data-lucide="pencil" class="h-4 w-4"></i></button><button type="button" data-delete-content="${item.id}" aria-label="Excluir conteúdo" class="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-white hover:text-red-600"><i data-lucide="trash-2" class="h-4 w-4"></i></button></div></div></article>`).join('') : '<p class="text-xs text-slate-400">Nenhum conteúdo cadastrado.</p>';
+                target.innerHTML = items.length ? items.map(item => `<article class="rounded-xl border border-slate-100 bg-slate-50 p-3"><div class="flex items-start justify-between gap-2"><div class="min-w-0"><p class="text-xs font-bold text-slate-700">${escapeHtml(item.text)}</p><p class="mt-1 text-[10px] text-slate-400">${escapeHtml(item.author || 'Sem autor')} · ${escapeHtml(getMood(item.mood)?.label || 'Todos os humores')}</p></div><div class="flex shrink-0 gap-1"><button type="button" data-edit-content="${item.id}" aria-label="Editar conteúdo" class="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-white hover:text-indigo-600"><i data-lucide="pencil" class="h-4 w-4"></i></button><button type="button" data-delete-content="${item.id}" aria-label="Excluir conteúdo" class="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-white hover:text-red-600"><i data-lucide="trash-2" class="h-4 w-4"></i></button></div></div></article>`).join('') : '<p class="text-xs text-slate-400">Nenhum conteúdo cadastrado.</p>';
             });
             lucide.createIcons();
         }
@@ -1441,6 +1474,8 @@
         }
 
         function bindAuthForms() {
+            document.getElementById('master-stores-tab').addEventListener('click', () => switchMasterTab('stores'));
+            document.getElementById('master-content-tab').addEventListener('click', () => switchMasterTab('content'));
             document.getElementById('toggle-master-password').addEventListener('click', event => {
                 const input = document.getElementById('master-password-input');
                 const visible = input.type === 'text';
@@ -1578,7 +1613,7 @@
             document.getElementById('content-form').addEventListener('submit', event => {
                 event.preventDefault();
                 const id = document.getElementById('content-editing-id').value;
-                const content = { id: id || crypto.randomUUID(), type: document.getElementById('content-type-input').value, text: document.getElementById('content-text-input').value.trim(), author: document.getElementById('content-author-input').value.trim(), active: true };
+                const content = { id: id || crypto.randomUUID(), type: document.getElementById('content-type-input').value, mood: document.getElementById('content-mood-input').value, text: document.getElementById('content-text-input').value.trim(), author: document.getElementById('content-author-input').value.trim(), active: true };
                 if (!content.text) return;
                 const contents = getContents();
                 saveContents(id ? contents.map(item => item.id === id ? content : item) : [...contents, content]);
@@ -1587,16 +1622,29 @@
             document.getElementById('cancel-content-edit').addEventListener('click', () => { document.getElementById('content-form').reset(); document.getElementById('content-editing-id').value = ''; document.getElementById('cancel-content-edit').classList.add('hidden'); });
             document.getElementById('view-master-panel').addEventListener('click', event => {
                 const edit = event.target.closest('[data-edit-content]');
-                if (edit) { const item = getContents().find(content => content.id === edit.dataset.editContent); if (!item) return; document.getElementById('content-editing-id').value = item.id; document.getElementById('content-type-input').value = item.type; document.getElementById('content-text-input').value = item.text; document.getElementById('content-author-input').value = item.author || ''; document.getElementById('cancel-content-edit').classList.remove('hidden'); return; }
+                if (edit) { const item = getContents().find(content => content.id === edit.dataset.editContent); if (!item) return; document.getElementById('content-editing-id').value = item.id; document.getElementById('content-type-input').value = item.type; document.getElementById('content-mood-input').value = item.mood || ''; document.getElementById('content-text-input').value = item.text; document.getElementById('content-author-input').value = item.author || ''; document.getElementById('cancel-content-edit').classList.remove('hidden'); return; }
                 const remove = event.target.closest('[data-delete-content]');
                 if (remove && window.confirm('Excluir este conteúdo?')) { saveContents(getContents().filter(item => item.id !== remove.dataset.deleteContent)); renderContentLists(); }
             });
+        }
+
+        function switchMasterTab(tab) {
+            const storesTab = document.getElementById('master-stores-tab');
+            const contentTab = document.getElementById('master-content-tab');
+            const storesView = document.getElementById('master-stores-view');
+            const contentView = document.getElementById('master-content-view');
+            const showingStores = tab === 'stores';
+            contentView.classList.toggle('hidden', showingStores);
+            storesView.querySelectorAll(':scope > section:not(#master-content-view)').forEach(section => section.classList.toggle('hidden', !showingStores));
+            storesTab.className = showingStores ? 'flex-1 rounded-xl bg-white px-4 py-2.5 text-xs font-black text-indigo-600 shadow-sm' : 'flex-1 rounded-xl px-4 py-2.5 text-xs font-black text-slate-500';
+            contentTab.className = showingStores ? 'flex-1 rounded-xl px-4 py-2.5 text-xs font-black text-slate-500' : 'flex-1 rounded-xl bg-white px-4 py-2.5 text-xs font-black text-indigo-600 shadow-sm';
         }
 
         async function bootstrapSupabase() {
             const { data } = await sigaSupabase.auth.getSession();
             if (data.session && !getSession()) saveSession({ type: 'master' });
             await hydrateFromSupabase();
+            ensureDefaultMoodContents();
             if (getSession()?.type === 'user' && getSession()?.role === 'gerente' && location.hash === '#manager-goals') {
                 location.hash = 'app';
                 return;
@@ -2655,6 +2703,22 @@
             { id: 'excelente', emoji: '🤩', label: 'Excelente' },
             { id: 'energizado', emoji: '🔥', label: 'Energizado' }
         ];
+        const defaultMoodPhrases = {
+            'muito-mal': ['Respire com calma: você não precisa resolver tudo de uma vez.', 'Um passo pequeno ainda é um passo importante.', 'Seu dia pode recomeçar a partir deste momento.', 'Você tem valor mesmo nos dias difíceis.', 'Permita-se fazer o melhor possível, sem exigir perfeição.', 'A pausa de hoje pode preparar a força de amanhã.', 'Você já superou momentos que pareciam impossíveis.', 'Gentileza consigo mesmo também é produtividade.', 'Continue no seu ritmo: constância vale mais que pressa.', 'Há espaço para esperança, mesmo quando ela parece pequena.'],
+            mal: ['Hoje pode ser difícil, mas você não está sem caminhos.', 'Organize uma pequena vitória e deixe o resto para depois.', 'Você pode transformar um atendimento de cada vez.', 'Seu esforço de hoje constrói resultados que ainda vão aparecer.', 'Não confunda um momento ruim com uma história inteira.', 'Levante a cabeça: novas oportunidades surgem durante o caminho.', 'Faça o próximo movimento com calma e confiança.', 'Você é capaz de recuperar o ritmo.', 'Todo começo de melhora merece ser reconhecido.', 'Sua presença já faz diferença para quem você atende.'],
+            normal: ['Mantenha o foco no próximo bom atendimento.', 'Consistência transforma pequenas ações em grandes resultados.', 'Escute com atenção e deixe o cliente mostrar o caminho.', 'Um dia equilibrado é uma ótima base para avançar.', 'Planeje, execute e observe o que funciona.', 'Cada contato é uma oportunidade de criar confiança.', 'Faça o simples bem feito e repita.', 'Seu ritmo constante pode surpreender no fim do dia.', 'Clareza na conversa abre portas.', 'Hoje é um bom dia para fortalecer seus resultados.'],
+            bem: ['Aproveite essa energia para criar conexões memoráveis.', 'Seu entusiasmo torna cada atendimento mais leve.', 'Continue espalhando confiança: ela também vende.', 'Uma atitude positiva abre espaço para boas oportunidades.', 'Use seu bom momento para ajudar alguém a decidir melhor.', 'Seu sorriso pode ser o começo de uma grande experiência.', 'Transforme sua disposição em presença e escuta.', 'Hoje você tem energia para ir além do esperado.', 'Compartilhe essa vibração com sua equipe.', 'O seu melhor atendimento pode acontecer agora.'],
+            excelente: ['Leve essa energia para cada detalhe do seu atendimento.', 'Grandes resultados começam com entusiasmo bem direcionado.', 'Você está em um ótimo momento: aproveite para superar expectativas.', 'Sua confiança inspira decisões melhores.', 'Converta entusiasmo em cuidado, clareza e resultado.', 'Hoje é um dia excelente para criar histórias de sucesso.', 'Mantenha essa vibração e faça cada contato valer.', 'Seu potencial está alto: use-o com intenção.', 'A excelência aparece nos detalhes que você escolhe cuidar.', 'Continue brilhando e elevando quem está ao seu redor.'],
+            energizado: ['Canalize essa energia para o próximo desafio.', 'Seu impulso pode abrir muitas portas hoje.', 'Transforme velocidade em foco e foco em resultado.', 'Você está pronto para fazer acontecer.', 'Use sua força para ouvir melhor e agir com precisão.', 'Cada oportunidade encontra você preparado.', 'Mova a equipe com exemplo e atitude.', 'Sua energia é poderosa quando tem direção.', 'Hoje é dia de avançar com coragem.', 'Faça dessa disposição uma sequência de boas entregas.']
+        };
+
+        function ensureDefaultMoodContents() {
+            const contents = getContents();
+            const existingKeys = new Set(contents.filter(item => item.type === 'frase' && item.mood).map(item => `${item.mood}:${item.text}`));
+            const additions = Object.entries(defaultMoodPhrases).flatMap(([mood, phrases]) => phrases.filter(text => !existingKeys.has(`${mood}:${text}`)).map(text => ({ id: crypto.randomUUID(), type: 'frase', mood, text, author: '', active: true })));
+            if (additions.length) saveContents([...contents, ...additions]);
+        }
+
         function moodStorageKey() { return scopedKey('siga-humor-registros'); }
         let selectedMoodId = 'normal';
 
@@ -2680,14 +2744,14 @@
         }
 
         function getMood(moodId) {
-            return moodOptions.find(mood => mood.id === moodId) || moodOptions.find(mood => mood.id === 'normal');
+            return moodOptions.find(mood => mood.id === moodId) || null;
         }
 
-        function renderMoodOptions() {
-            const optionsContainer = document.getElementById('mood-options');
+        function renderMoodOptions(containerId = 'mood-options', required = false) {
+            const optionsContainer = document.getElementById(containerId);
             optionsContainer.innerHTML = moodOptions.map(mood => `
                 <button type="button" data-mood-id="${mood.id}" aria-label="${mood.label}" aria-pressed="${mood.id === selectedMoodId}"
-                    class="mood-option min-w-0 rounded-xl border px-1 py-2 text-center transition-all hover:-translate-y-0.5 ${mood.id === selectedMoodId ? 'border-indigo-200 bg-indigo-50 shadow-sm' : 'border-transparent bg-slate-50'}">
+                    class="mood-option min-w-0 rounded-xl border px-1 py-2 text-center transition-all hover:-translate-y-0.5 ${mood.id === selectedMoodId ? 'border-indigo-200 bg-indigo-50' : 'border-slate-100 bg-slate-50'}">
                     <span class="block text-xl leading-6">${mood.emoji}</span>
                     <span class="mt-1 block truncate text-[9px] font-bold text-slate-500">${mood.label}</span>
                 </button>
@@ -2696,15 +2760,19 @@
             optionsContainer.querySelectorAll('.mood-option').forEach(button => {
                 button.addEventListener('click', () => {
                     selectedMoodId = button.dataset.moodId;
+                    saveMoodRecord(getLocalDateKey(), selectedMoodId);
                     renderMoodOptions();
                     updateMoodLabel();
+                    renderMoodCalendar();
+                    renderDailyContent();
+                    if (required) closeRequiredMood();
                 });
             });
         }
 
         function updateMoodLabel() {
             const mood = getMood(selectedMoodId);
-            document.getElementById('mood-selected-label').textContent = `Humor de hoje: ${mood.emoji} ${mood.label}`;
+            document.getElementById('mood-selected-label').textContent = mood ? `Humor de hoje: ${mood.emoji} ${mood.label}` : 'Humor de hoje não registrado';
         }
 
         function renderMoodCalendar() {
@@ -2723,13 +2791,13 @@
                 date.setDate(firstDay.getDate() + index);
                 const dateKey = getLocalDateKey(date);
                 const isToday = dateKey === todayKey;
-                const mood = getMood(isToday ? selectedMoodId : (records[dateKey] || 'normal'));
+                const mood = getMood(isToday ? selectedMoodId : records[dateKey]);
                 const todayClasses = isToday ? 'border-indigo-300 bg-indigo-50 ring-1 ring-indigo-100' : 'border-slate-100 bg-slate-50';
                 days.push(`
-                    <button type="button" data-date="${dateKey}" ${isToday ? '' : 'disabled'} aria-label="${date.toLocaleDateString('pt-BR')}: ${mood.label}${isToday ? ', hoje' : ''}"
+                    <button type="button" data-date="${dateKey}" ${isToday ? '' : 'disabled'} aria-label="${date.toLocaleDateString('pt-BR')}: ${mood?.label || 'Sem registro'}${isToday ? ', hoje' : ''}"
                         class="rounded-lg border ${todayClasses} p-1 text-center ${isToday ? 'cursor-pointer hover:border-indigo-400' : 'cursor-default opacity-80'}">
                         <span class="block text-[9px] font-bold text-slate-400">${date.getDate()}</span>
-                        <span class="block text-base leading-5">${mood.emoji}</span>
+                        <span class="block text-base leading-5">${mood?.emoji || '∅'}</span>
                     </button>
                 `);
             }
@@ -2737,7 +2805,7 @@
             calendar.innerHTML = days.join('');
             const todayButton = calendar.querySelector(`[data-date="${todayKey}"]`);
             if (todayButton) todayButton.addEventListener('click', () => {
-                selectedMoodId = records[todayKey] || 'normal';
+                selectedMoodId = records[todayKey] || null;
                 renderMoodOptions();
                 updateMoodLabel();
             });
@@ -2746,7 +2814,7 @@
         function refreshMoodCard() {
             const todayKey = getLocalDateKey();
             const records = getMoodRecords();
-            selectedMoodId = records[todayKey] || 'normal';
+            selectedMoodId = records[todayKey] || null;
             renderMoodOptions();
             updateMoodLabel();
             renderMoodCalendar();
@@ -2754,14 +2822,8 @@
 
         function initMoodCard() {
             refreshMoodCard();
-
-            document.getElementById('confirm-mood').addEventListener('click', () => {
-                const todayKey = getLocalDateKey();
-                saveMoodRecord(todayKey, selectedMoodId || 'normal');
-                const mood = getMood(selectedMoodId);
-                document.getElementById('mood-feedback').textContent = `Humor ${mood.label.toLowerCase()} salvo hoje.`;
-                renderMoodCalendar();
-            });
+            renderMoodOptions('required-mood-options', true);
+            if (!getMoodRecords()[getLocalDateKey()]) openRequiredMood();
 
             document.getElementById('toggle-mood-history').addEventListener('click', event => {
                 const history = document.getElementById('mood-history');
@@ -2772,6 +2834,20 @@
                 event.currentTarget.innerHTML = `<i data-lucide="${expanded ? 'minus' : 'plus'}" class="w-4 h-4"></i>`;
                 lucide.createIcons();
             });
+        }
+
+        function openRequiredMood() {
+            const modal = document.getElementById('mood-required-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            renderMoodOptions('required-mood-options', true);
+            lucide.createIcons();
+        }
+
+        function closeRequiredMood() {
+            const modal = document.getElementById('mood-required-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
         }
 
         window.activeGoalPeriod = 'semana';
