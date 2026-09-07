@@ -1303,24 +1303,27 @@
             const weekly = goal.weekly || { total: 0, weekStart: today, weekEnd: today, distributions: [] };
             const monthly = goal.monthly || { month: today.slice(0, 7), total: 0 };
             const userDistribution = weekly.distributions.find(item => item.userId === effectiveUserId()) || { value: 0, percentage: 0 };
+            const monthlyWeeklyTarget = getWeeklyGoals()
+                .filter(item => monthly.id && item.lojaId === getSession()?.lojaId && item.monthlyGoalId === monthly.id)
+                .reduce((sum, item) => sum + Number(item.distributions?.find(distribution => distribution.userId === effectiveUserId())?.value || 0), 0);
             const sales = getSales();
             const currentPeriod = window.activeGoalPeriod || 'semana';
-            let storeSales = [];
-            if (currentPeriod === 'mes') { try { storeSales = JSON.parse(localStorage.getItem(`siga-vendas-loja::${getSession()?.lojaId}`)) || []; } catch (error) { storeSales = []; } }
             const weekDays = daysBetween(weekly.weekStart, weekly.weekEnd);
             const start = currentPeriod === 'dia' ? today : currentPeriod === 'mes' ? `${monthly.month}-01` : weekly.weekStart;
             const end = currentPeriod === 'dia' ? today : currentPeriod === 'mes' ? `${monthly.month}-${String(new Date(Number(monthly.month.slice(0, 4)), Number(monthly.month.slice(5, 7)), 0).getDate()).padStart(2, '0')}` : weekly.weekEnd;
-            const target = currentPeriod === 'dia' ? Number(userDistribution.value) / weekDays : currentPeriod === 'mes' ? monthly.total : Number(userDistribution.value);
-            const total = [...sales, ...storeSales].filter(sale => sale.date >= start && sale.date <= end).reduce((sum, sale) => sum + Number(sale.value || 0), 0);
+            const target = currentPeriod === 'dia' ? Number(userDistribution.value) / weekDays : currentPeriod === 'mes' ? monthlyWeeklyTarget : Number(userDistribution.value);
+            const salesStart = currentPeriod === 'semana' ? rankingDateRange().start : start;
+            const salesEnd = currentPeriod === 'semana' ? rankingDateRange().end : end;
+            const total = sales.filter(sale => sale.date >= salesStart && sale.date <= salesEnd).reduce((sum, sale) => sum + Number(sale.value || 0), 0);
             const goalValues = configuredGoalValues(currentPeriod, weekly, monthly, target, weekDays);
-            return { goal: goalValues, target, total, start, end };
+            return { goal: goalValues, target, total, start: currentPeriod === 'semana' ? salesStart : start, end: currentPeriod === 'semana' ? salesEnd : end };
         }
 
         function renderGoalMarkers(goal) {
             const values = { bronze: Number(goal.bronze || 0), silver: Number(goal.silver || 0), gold: Number(goal.gold || 0), diamond: Number(goal.diamond || 0) };
             const max = Math.max(1, values.diamond);
             const tiers = [['bronze', 'Bronze', 'tier-bronze'], ['silver', 'Prata', 'tier-silver'], ['gold', 'Ouro', 'tier-gold'], ['diamond', 'Diamante', 'tier-diamond']];
-            document.getElementById('goal-markers').innerHTML = tiers.map(([key, label, color]) => `<button type="button" data-goal-tier="${key}" class="absolute -translate-x-1/2 text-center" style="left:${Math.min(100, values[key] / max * 100)}%"><span class="mx-auto block h-2 w-0.5 bg-slate-300"></span><span class="mt-1 block whitespace-nowrap rounded-full px-1 text-[8px] font-black uppercase ${color} text-white">${label}</span></button>`).join('');
+            document.getElementById('goal-markers').innerHTML = tiers.filter(([key]) => values[key] > 0).map(([key, label, color]) => `<button type="button" data-goal-tier="${key}" class="absolute -translate-x-1/2 text-center" style="left:${Math.min(100, values[key] / max * 100)}%"><span class="mx-auto block h-2 w-0.5 bg-slate-300"></span><span class="mt-1 block whitespace-nowrap rounded-full px-1 text-[8px] font-black uppercase ${color} text-white">${label}</span></button>`).join('');
         }
 
         function renderGoalCard() {
