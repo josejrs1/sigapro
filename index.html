@@ -46,6 +46,11 @@
         #manager-bar > div { min-height: 2.75rem; }
         #manager-bar button, #manager-bar select { min-height: 2.25rem; }
         #mobile-navigation { box-shadow: 0 -8px 24px rgba(30, 41, 59, 0.08); }
+        #mobile-navigation { position: fixed !important; left: 0; right: 0; bottom: 0; width: 100%; z-index: 60; }
+        #fab-button { position: fixed !important; right: 1rem; bottom: 5.75rem; width: 3.75rem; height: 3.75rem; max-width: calc(100vw - 2rem); z-index: 55; }
+        #manager-bar { overflow: hidden; }
+        #manager-bar > div > div:last-child { min-width: 0; max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+        #manager-bar > div > div:last-child::-webkit-scrollbar { display: none; }
         #mobile-navigation button { min-width: 3.5rem; }
         #mood-card { min-height: 11rem; }
         #mood-card .mood-option { min-height: 3.5rem; }
@@ -71,6 +76,7 @@
             #goal-markers { top: 1.25rem; }
             #goal-markers button span:last-child { font-size: 7px; }
             #mobile-navigation { height: 4.5rem; padding-left: 0.5rem; padding-right: 0.5rem; }
+            #fab-button { right: 0.875rem; bottom: 5.25rem; }
             #mobile-navigation span { font-size: 8px; letter-spacing: 0.04em; }
             #mobile-navigation i { width: 1.25rem; height: 1.25rem; }
             [role="dialog"] { padding: 0.75rem; }
@@ -640,11 +646,12 @@
             'siga-conteudos': 'conteudos'
         };
 
-        function databaseRowFromApp(table, item) {
-            if (table === 'tarefas') return { id: item.id, loja_id: getSession()?.lojaId || null, titulo: item.title, horario: item.time, owner: item.owner || 'user', responsavel_id: item.ownerId || effectiveUserId(), concluida: item.completed, observacao: item.observation || '', data: item.date, serie_id: item.seriesId || null, dias_repeticao: item.repeatDays || null };
-            if (table === 'vendas') return { id: item.id, loja_id: getSession()?.lojaId || null, vendedor_id: item.userId || effectiveUserId(), cliente: item.client || '', valor: item.value, data_hora: item.datetime || item.dateTime, produtos: item.products || [] };
-            if (table === 'atendimentos') return { id: item.id, loja_id: getSession()?.lojaId || null, vendedor_id: item.userId || effectiveUserId(), cliente: item.client || '', resultado: item.outcome, resultado_label: item.outcomeLabel || '', valor: item.value || 0, telefone: item.phone || '', observacao: item.notes || '', produtos: item.products || [], produtos_apresentados: item.shownProducts || [], demanda: item.demand || '', venda_id: item.saleId || null, condicional_id: item.conditionalId || null, data_hora: item.datetime || item.dateTime };
-            if (table === 'condicionais') return { id: item.id, loja_id: getSession()?.lojaId || null, vendedor_id: item.userId || effectiveUserId(), cliente: item.client, telefone: item.phone, observacao: item.observation || '', produtos: item.products || [], prazo: item.dueDate || null, status: item.status || 'aberta', task_id: item.taskId || null, created_at: item.createdAt };
+        function databaseRowFromApp(table, item, scopedUserId = null) {
+            const userId = item.userId || item.ownerId || scopedUserId || effectiveUserId();
+            if (table === 'tarefas') return { id: item.id, loja_id: getSession()?.lojaId || null, titulo: item.title, horario: item.time, owner: item.owner || 'user', responsavel_id: userId, concluida: item.completed, observacao: item.observation || '', data: item.date, serie_id: item.seriesId || null, dias_repeticao: item.repeatDays || null };
+            if (table === 'vendas') return { id: item.id, loja_id: getSession()?.lojaId || null, vendedor_id: userId, cliente: item.client || '', valor: item.value, data_hora: item.datetime || item.dateTime, produtos: item.products || [] };
+            if (table === 'atendimentos') return { id: item.id, loja_id: getSession()?.lojaId || null, vendedor_id: userId, cliente: item.client || '', resultado: item.outcome, resultado_label: item.outcomeLabel || '', valor: item.value || 0, telefone: item.phone || '', observacao: item.notes || '', produtos: item.products || [], produtos_apresentados: item.shownProducts || [], demanda: item.demand || '', venda_id: item.saleId || null, condicional_id: item.conditionalId || null, data_hora: item.datetime || item.dateTime };
+            if (table === 'condicionais') return { id: item.id, loja_id: getSession()?.lojaId || null, vendedor_id: userId, cliente: item.client, telefone: item.phone, observacao: item.observation || '', produtos: item.products || [], prazo: item.dueDate || null, status: item.status || 'aberta', task_id: item.taskId || null, created_at: item.createdAt };
             if (table === 'metas') return { id: item.id, loja_id: item.lojaId, vendedor_id: item.userId, semana_inicio: item.weekStart, semana_fim: item.weekEnd, bronze: item.bronze, prata: item.silver, ouro: item.gold, diamante: item.diamond, mes_referencia: `${item.month}-01`, mensal_bronze: item.monthlyBronze, mensal_prata: item.monthlySilver, mensal_ouro: item.monthlyGold, mensal_diamante: item.monthlyDiamond, meta_mensal: item.monthlyDiamond };
             if (table === 'conteudos') return { id: item.id, tipo: item.type, texto: item.text, autor: item.author || '', humor: item.mood || null, ativo: item.active !== false };
             if (table === 'metas_mensais') return { id: item.id, loja_id: item.lojaId, mes_referencia: `${item.month}-01`, valor_total: item.total };
@@ -666,15 +673,30 @@
             return row;
         }
 
-        async function syncStoredList(storageKey, list, removedIds = []) {
+        const pendingSupabaseSyncs = new Map();
+
+        function syncStoredList(storageKey, list, removedIds = []) {
             const baseKey = storageKey.replace(/::[^:]+$/, '');
             const table = storageKey === lojasStorageKey ? 'lojas' : storageKey === usuariosStorageKey ? 'perfis' : databaseTableByStorageKey[baseKey];
             if (!table) return;
-            if (removedIds.length) {
-                const { error: deleteError } = await sigaSupabase.from(table).delete().in('id', removedIds);
+            const pending = pendingSupabaseSyncs.get(storageKey) || { list: [], removedIds: [], timer: null };
+            pending.list = list;
+            pending.removedIds = [...new Set([...pending.removedIds, ...removedIds])];
+            window.clearTimeout(pending.timer);
+            pending.timer = window.setTimeout(() => flushSupabaseSync(storageKey, table), 350);
+            pendingSupabaseSyncs.set(storageKey, pending);
+        }
+
+        async function flushSupabaseSync(storageKey, table) {
+            const pending = pendingSupabaseSyncs.get(storageKey);
+            if (!pending) return;
+            pendingSupabaseSyncs.delete(storageKey);
+            if (pending.removedIds.length) {
+                const { error: deleteError } = await sigaSupabase.from(table).delete().in('id', pending.removedIds);
                 if (deleteError) console.warn(`Falha ao excluir de ${table}:`, deleteError.message);
             }
-            const rows = list.map(item => table === 'lojas' ? { id: item.id, nome: item.name, slug: item.slug, configuracoes: item.configuracoes || {}, created_at: item.createdAt } : table === 'perfis' ? { id: item.id, loja_id: item.lojaId, nome: item.name, cargo: item.role, username: item.username, password: item.password, slug: item.slug, full_slug: item.fullSlug, created_at: item.createdAt } : databaseRowFromApp(table, item));
+            const scopedUserId = storageKey.match(/::([^:]+)$/)?.[1] || null;
+            const rows = pending.list.map(item => table === 'lojas' ? { id: item.id, nome: item.name, slug: item.slug, configuracoes: item.configuracoes || {}, created_at: item.createdAt } : table === 'perfis' ? { id: item.id, loja_id: item.lojaId, nome: item.name, cargo: item.role, username: item.username, password: item.password, slug: item.slug, full_slug: item.fullSlug, created_at: item.createdAt } : databaseRowFromApp(table, item, scopedUserId));
             if (!rows.length) return;
             const { error } = await sigaSupabase.from(table).upsert(rows);
             if (error) {
@@ -683,12 +705,46 @@
             }
         }
 
+        let lastSupabaseHydration = 0;
+
         async function hydrateFromSupabase() {
-            const requests = [['lojas', lojasStorageKey], ['perfis', usuariosStorageKey], ...Object.entries(databaseTableByStorageKey).map(([key, table]) => [table, key])];
-            await Promise.all(requests.map(async ([table, storageKey]) => {
-                const { data, error } = await sigaSupabase.from(table).select('*');
+            const session = getSession();
+            const requests = [];
+            const addRequest = (table, storageKey, column, value) => requests.push({ table, storageKey, column, value });
+            if (!session) {
+                addRequest('lojas', lojasStorageKey);
+                addRequest('perfis', usuariosStorageKey);
+            } else if (session.type === 'master') {
+                addRequest('lojas', lojasStorageKey);
+                addRequest('perfis', usuariosStorageKey);
+                Object.entries(databaseTableByStorageKey).forEach(([key, table]) => addRequest(table, key));
+            } else {
+                addRequest('lojas', lojasStorageKey, 'id', session.lojaId);
+                addRequest('perfis', usuariosStorageKey, 'loja_id', session.lojaId);
+                const userId = effectiveUserId();
+                const managerStoreView = session.role === 'gerente' && !session.viewingUserId;
+                const ownerColumn = managerStoreView ? 'loja_id' : null;
+                const ownerValue = managerStoreView ? session.lojaId : userId;
+                addRequest('tarefas', 'siga-tarefas', ownerColumn || 'responsavel_id', ownerValue);
+                addRequest('vendas', 'siga-vendas', ownerColumn || 'vendedor_id', ownerValue);
+                addRequest('atendimentos', 'siga-atendimentos', ownerColumn || 'vendedor_id', ownerValue);
+                addRequest('condicionais', 'siga-condicionais', ownerColumn || 'vendedor_id', ownerValue);
+                addRequest('vendas_loja', 'siga-vendas-loja', 'loja_id', session.lojaId);
+                addRequest('metas', 'siga-metas', 'vendedor_id', userId);
+                addRequest('metas_mensais', 'siga-metas-mensais', 'loja_id', session.lojaId);
+                addRequest('metas_semanais', 'siga-metas-semanais', 'loja_id', session.lojaId);
+                addRequest('conteudos', 'siga-conteudos');
+            }
+            await Promise.all(requests.map(async ({ table, storageKey, column, value }) => {
+                let query = sigaSupabase.from(table).select('*');
+                if (column && value) query = query.eq(column, value);
+                const { data, error } = await query;
                 if (error || !data) return;
                 const list = data.map(row => table === 'lojas' ? { ...row, name: row.nome ?? row.name, createdAt: row.criado_em ?? row.created_at ?? row.createdAt } : table === 'perfis' ? { ...row, lojaId: row.loja_id ?? row.lojaId, name: row.nome ?? row.name, role: row.cargo ?? row.funcao ?? row.role, username: row.username ?? row.login, password: row.password ?? row.senha, slug: row.slug, fullSlug: row.full_slug ?? row.link_slug ?? row.fullSlug, createdAt: row.created_at ?? row.criado_em ?? row.createdAt } : databaseRowToApp(table, row));
+                if (!list.length && table === 'tarefas') {
+                    if (session.role === 'gerente' && !session.viewingUserId) getUsuarios().filter(user => user.lojaId === session.lojaId).forEach(user => writeStoredList(`${storageKey}::${user.id}`, []));
+                    else if (value) writeStoredList(`${storageKey}::${value}`, []);
+                }
                 if (list.length) {
                     const scopedTables = new Set(['tarefas', 'vendas', 'atendimentos', 'condicionais', 'vendas_loja']);
                     if (scopedTables.has(table)) {
@@ -704,6 +760,7 @@
                     } else writeStoredList(storageKey, mergeStoredLists(readStoredList(storageKey), list));
                 }
             }));
+            lastSupabaseHydration = Date.now();
         }
 
         function readStoredList(key) {
@@ -1595,12 +1652,12 @@
                     else errorLabel.textContent = 'E-mail ou senha inválidos.';
                     return;
                 }
-                await hydrateFromSupabase();
                 saveSession({ type: 'master' });
+                await hydrateFromSupabase();
                 location.hash = 'master';
             });
 
-            document.getElementById('pessoa-login-form').addEventListener('submit', event => {
+            document.getElementById('pessoa-login-form').addEventListener('submit', async event => {
                 event.preventDefault();
                 const usuario = getUsuarios().find(item => item.id === document.getElementById('pessoa-user-input').value && item.lojaId === document.getElementById('pessoa-store-input').value);
                 const password = document.getElementById('pessoa-password-input').value;
@@ -1609,6 +1666,7 @@
                     return;
                 }
                 saveSession({ type: 'user', userId: usuario.id, role: usuario.role, lojaId: usuario.lojaId, name: usuario.name, viewingUserId: null });
+                await hydrateFromSupabase();
                 location.hash = 'app';
             });
             document.getElementById('pessoa-store-input').addEventListener('change', event => populatePersonUsers(event.target.value));
@@ -1750,6 +1808,12 @@
         prepareNumericInputs();
         bindAuthForms();
         window.addEventListener('hashchange', applyRoute);
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState !== 'visible' || !getSession()?.type || Date.now() - lastSupabaseHydration < 60000) return;
+            hydrateFromSupabase().then(() => {
+                if (getSession()?.type === 'user') refreshAllAppViews();
+            });
+        });
         bootstrapSupabase();
         // ================= FIM AUTENTICAÇÃO E MULTI-LOJA =================
 
