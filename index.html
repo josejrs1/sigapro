@@ -602,7 +602,7 @@
             if (table === 'conteudos') return { id: item.id, tipo: item.type, texto: item.text, autor: item.author || '', humor: item.mood || null, ativo: item.active !== false };
             if (table === 'metas_mensais') return { id: item.id, loja_id: item.lojaId, mes_referencia: `${item.month}-01`, valor_total: item.total };
             if (table === 'metas_semanais') return { id: item.id, loja_id: item.lojaId, meta_mensal_id: item.monthlyGoalId, nome: item.name, semana_inicio: item.weekStart, semana_fim: item.weekEnd, valor_total: item.total, distribuicao: item.distributions || [] };
-            if (table === 'vendas_loja') return { id: item.id, loja_id: item.lojaId, descricao: item.client, valor: item.value, data: item.date };
+            if (table === 'vendas_loja') return { id: item.id, loja_id: item.lojaId || getSession()?.lojaId || null, descricao: item.client || '', valor: Number(item.value || 0), data: item.date };
             return item;
         }
 
@@ -1263,7 +1263,10 @@
 
         function getManagerStoreSales() {
             const session = getSession();
-            return readStoredList(`siga-vendas-loja::${session?.lojaId}`).sort((first, second) => second.date.localeCompare(first.date));
+            const key = `siga-vendas-loja::${session?.lojaId}`;
+            const sales = readStoredList(key).map(sale => ({ ...sale, lojaId: sale.lojaId || session?.lojaId, storeSale: true }));
+            writeStoredList(key, sales);
+            return sales.sort((first, second) => second.date.localeCompare(first.date));
         }
 
         function renderManagerStoreSales() {
